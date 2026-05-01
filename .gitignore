@@ -1,0 +1,28 @@
+# API keys — never commit
+anthropic_key.txt
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Generated output
+*_informalizer.md
+
+# macOS
+.DS_Store
+
+# Planning / scratch files
+plan.txt
+
+# IDEs
+.idea/
+.vscode/
+*.swp
