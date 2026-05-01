@@ -13,9 +13,6 @@ env/
 dist/
 build/
 
-# Generated output
-*_informalizer.md
-
 # macOS
 .DS_Store
 
