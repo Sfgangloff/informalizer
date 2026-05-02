@@ -1,0 +1,205 @@
+{
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::LanguageOn": {
+    "kind": "def",
+    "note": "",
+    "signature": "def LanguageOn (X : Set (G \u2192 A)) (U : Finset G) : Set (Pattern A G)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777316+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::MulSubshift": {
+    "kind": "structure",
+    "note": "",
+    "signature": "structure MulSubshift",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777017+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::MulSubshift.languageOn": {
+    "kind": "def",
+    "note": "",
+    "signature": "def MulSubshift.languageOn {A G} [TopologicalSpace A] [Inhabited A] [Monoid G]\n    (Y : MulSubshift A G) (U : Finset G) : Set (Pattern A G)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777335+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::MulSubshift.ofForbidden": {
+    "kind": "def",
+    "note": "",
+    "signature": "def MulSubshift.ofForbidden [DiscreteTopology A] (F : Set (Pattern A G)) : MulSubshift A G where\n  carrier",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777279+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::Pattern": {
+    "kind": "structure",
+    "note": "",
+    "signature": "structure Pattern (A : Type*) (G : Type*) [Inhabited A]",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777057+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::Pattern.mulOccursInAt": {
+    "kind": "def",
+    "note": "",
+    "signature": "def Pattern.mulOccursInAt (p : Pattern A G) (x : G \u2192 A) (g : G) : Prop",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777077+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::Pattern.mulShift": {
+    "kind": "def",
+    "note": "",
+    "signature": "protected noncomputable def Pattern.mulShift (p : Pattern A G) (v : G) : G \u2192 A",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777115+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::Subshift": {
+    "kind": "structure",
+    "note": "",
+    "signature": "structure Subshift (A : Type*) [TopologicalSpace A] (G : Type*) [AddMonoid G]",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776997+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::continuous_mulShift": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "@[to_additive (attr",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776882+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::cylinder": {
+    "kind": "def",
+    "note": "",
+    "signature": "def cylinder (U : Finset G) (x : G \u2192 A) : Set (G \u2192 A)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776901+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::cylinder_eq_set_pi": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma cylinder_eq_set_pi (U : Finset G) (x : G \u2192 A) :\n    cylinder U x = Set.pi (\u2191U : Set G) (fun i => ({x i} : Set A))",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776921+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::finite_setOf_pattern_support_eq": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma finite_setOf_pattern_support_eq\n    {A G : Type*} [Finite A] [Inhabited A]\n    (U : Finset G) :\n    ({p : Pattern A G | p.support = U}).Finite",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777298+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::fromConfig": {
+    "kind": "def",
+    "note": "",
+    "signature": "noncomputable def fromConfig (x : G \u2192 A) (U : Finset G) : Pattern A G",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777134+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::isClosed_cylinder": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma isClosed_cylinder [T1Space A] (U : Finset G) (x : G \u2192 A) :\n    IsClosed (cylinder U x)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776979+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::isClosed_mulForbidden": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma isClosed_mulForbidden [DiscreteTopology A] (F : Set (Pattern A G)) :\n    IsClosed (mulForbidden F)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777243+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::isClosed_mulOccursInAt": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma isClosed_mulOccursInAt [T1Space A] (p : Pattern A G) (g : G) :\n    IsClosed { x | p.mulOccursInAt x g }",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777262+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::isOpen_cylinder": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma isOpen_cylinder [DiscreteTopology A] (U : Finset G) (x : G \u2192 A) :\n    IsOpen (cylinder U x)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776961+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::isOpen_mulOccursInAt": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma isOpen_mulOccursInAt [DiscreteTopology A] (p : Pattern A G) (g : G) :\n    IsOpen { x | p.mulOccursInAt x g }",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777225+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mapsTo_mulShift_mulForbidden": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma mapsTo_mulShift_mulForbidden {A G : Type*} [Inhabited A] [Monoid G]\n    (F : Set (Pattern A G)) (h : G) :\n    Set.MapsTo (mulShift h) (mulForbidden (A",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777189+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mem_cylinder": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma mem_cylinder {U : Finset G} {x y : G \u2192 A} :\n    y \u2208 cylinder U x \u2194 \u2200 i \u2208 U, y i = x i",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776940+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulForbidden": {
+    "kind": "def",
+    "note": "",
+    "signature": "def mulForbidden (F : Set (Pattern A G)) : Set (G \u2192 A)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777096+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulFullShift": {
+    "kind": "def",
+    "note": "",
+    "signature": "def mulFullShift (A G) [TopologicalSpace A] [Monoid G] : MulSubshift A G where\n  carrier",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777037+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulOccursInAt_eq_cylinder": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma mulOccursInAt_eq_cylinder\n    (p : Pattern A G) (g : G) :\n    { x | p.mulOccursInAt x g } = cylinder (p.support.image (g * \u00b7)) (p.mulShift g)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777207+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulOccursInAt_mulShift": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma mulOccursInAt_mulShift {A G : Type*} [Inhabited A] [Monoid G]\n    (p : Pattern A G) (x : G \u2192 A) (g h : G) :\n    p.mulOccursInAt (mulShift g x) h \u2194 p.mulOccursInAt x (g * h)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777170+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulShift": {
+    "kind": "def",
+    "note": "",
+    "signature": "def mulShift (g : G) (x : G \u2192 A) : G \u2192 A",
+    "state": "known",
+    "updated_at": "2026-05-02T03:34:51.747447+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulShift_apply": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "@[to_additive (attr",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776819+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulShift_apply_mul_left_of_mem": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "lemma mulShift_apply_mul_left_of_mem\n    (p : Pattern A G) (v w : G) (hw : w \u2208 p.support) :\n    p.mulShift v (v * w) = p.config w",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.777152+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulShift_mul": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "@[to_additive] lemma mulShift_mul (g\u2081 g\u2082 : G) (x : G \u2192 A) :\n    mulShift (g\u2081 * g\u2082) x = mulShift g\u2082 (mulShift g\u2081 x)",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776862+00:00"
+  },
+  "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean::mulShift_one": {
+    "kind": "lemma",
+    "note": "",
+    "signature": "@[to_additive (attr",
+    "state": "unknown",
+    "updated_at": "2026-05-02T03:33:37.776842+00:00"
+  }
+}
