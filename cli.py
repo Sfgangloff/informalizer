@@ -21,6 +21,12 @@ from informalizer.formatter import print_terminal, write_markdown, write_html
 from informalizer.graph_renderer import render_graph
 from informalizer.knowledge_store import KnowledgeStore, make_uid, VALID_STATES
 from informalizer.diff_finder import find_diff
+from informalizer import corpus as corpus_mod
+from informalizer import embedder as embedder_mod
+from informalizer import wiki_generator as wiki_mod
+from informalizer import relationship_explainer as rel_mod
+from informalizer import html_renderer as explorer_mod
+from informalizer import server as server_mod
 
 _console = Console()
 
@@ -317,6 +323,138 @@ def _cmd_state(args: argparse.Namespace) -> None:
 
 
 # ======================================================================
+# corpus
+# ======================================================================
+
+def _cmd_corpus(args: argparse.Namespace) -> None:
+    if args.corpus_action == "add":
+        target = Path(args.path)
+        if not target.exists():
+            print(f"Error: path not found: {target}", file=sys.stderr)
+            sys.exit(1)
+
+        client = _make_client(args) if not args.no_describe else None
+
+        conn = corpus_mod.open_corpus()
+        new, updated = corpus_mod.ingest_paths(
+            conn, client, [target], include_examples=args.examples,
+        )
+        print(f"\ncorpus: +{new} new, ~{updated} updated.", file=sys.stderr)
+
+        edges = corpus_mod.rebuild_cross_file_edges(conn)
+        print(f"corpus: {edges} cross-file 'uses' edges.", file=sys.stderr)
+
+        if not args.no_embed:
+            embedder_mod.fit_corpus(conn, corpus_mod.default_corpus_path())
+
+        conn.close()
+        return
+
+    if args.corpus_action == "list":
+        conn = corpus_mod.open_corpus()
+        records = corpus_mod.get_all_objects(conn)
+        if not records:
+            _console.print("[dim]corpus is empty[/dim]")
+            conn.close()
+            return
+
+        table = Table(show_header=True, header_style="bold cyan", expand=True)
+        table.add_column("Source", overflow="fold")
+        table.add_column("Kind", width=12)
+        table.add_column("Name")
+        table.add_column("Has desc?", width=10, justify="center")
+        for r in records:
+            table.add_row(
+                Path(r.source_file).name,
+                f"[magenta]{r.kind}[/magenta]",
+                f"[bold]{r.name}[/bold]",
+                "[green]yes[/green]" if r.description.strip() else "[dim]no[/dim]",
+            )
+        _console.print()
+        _console.print(f"[bold]Corpus[/bold]  [dim]({len(records)} objects)[/dim]")
+        _console.print(table)
+        conn.close()
+        return
+
+    if args.corpus_action == "embed":
+        conn = corpus_mod.open_corpus()
+        embedder_mod.fit_corpus(conn, corpus_mod.default_corpus_path())
+        conn.close()
+        return
+
+    if args.corpus_action == "explain":
+        client = _make_client(args)
+        conn = corpus_mod.open_corpus()
+        rel_mod.explain_relationships(client, conn, only_missing=not args.all,
+                                       limit=args.limit)
+        conn.close()
+        return
+
+
+# ======================================================================
+# wiki
+# ======================================================================
+
+def _cmd_wiki(args: argparse.Namespace) -> None:
+    output_dir = Path(args.output_dir)
+    conn = corpus_mod.open_corpus()
+    wiki_mod.generate_wiki(conn, output_dir, similar_k=args.similar_k)
+    conn.close()
+
+
+# ======================================================================
+# explore
+# ======================================================================
+
+def _cmd_explore(args: argparse.Namespace) -> None:
+    lean_path = Path(args.lean_file)
+    if not lean_path.exists():
+        print(f"Error: file not found: {lean_path}", file=sys.stderr)
+        sys.exit(1)
+
+    output = Path(args.output) if args.output else lean_path.with_name(
+        f"{lean_path.stem}_explorer.html"
+    )
+
+    conn = corpus_mod.open_corpus()
+    try:
+        explorer_mod.render_explorer(
+            conn, lean_path, output, similar_k=args.similar_k,
+        )
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        conn.close()
+
+
+# ======================================================================
+# serve
+# ======================================================================
+
+def _cmd_serve(args: argparse.Namespace) -> None:
+    lean_path = Path(args.lean_file)
+    if not lean_path.exists():
+        print(f"Error: file not found: {lean_path}", file=sys.stderr)
+        sys.exit(1)
+
+    conn = corpus_mod.open_corpus()
+    try:
+        server_mod.serve_explorer(
+            conn, lean_path,
+            similar_k=args.similar_k,
+            host=args.host,
+            port=args.port,
+            open_browser=not args.no_browser,
+        )
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+    finally:
+        conn.close()
+
+
+# ======================================================================
 # graph
 # ======================================================================
 
@@ -388,6 +526,62 @@ def _build_parser() -> argparse.ArgumentParser:
                    choices=list(VALID_STATES), metavar="STATE",
                    help="Set all objects in the file to this state")
 
+    # -- corpus --
+    p = sub.add_parser("corpus", help="Manage the multi-file object corpus (Phase 3A)")
+    csub = p.add_subparsers(dest="corpus_action", required=True)
+
+    cadd = csub.add_parser("add",
+                           help="Parse, describe (Claude) and embed Lean files into the corpus")
+    cadd.add_argument("path", help="Path to a .lean file or a directory")
+    cadd.add_argument("--examples", action="store_true",
+                      help="Generate a short Lean 4 example for each new object")
+    cadd.add_argument("--no-describe", action="store_true",
+                      help="Skip Claude description (insert with empty description)")
+    cadd.add_argument("--no-embed", action="store_true",
+                      help="Skip refitting embeddings after ingest")
+    cadd.add_argument("--api-key", default=None, help="Anthropic API key")
+    cadd.add_argument("--api-key-file", default=None, help="File containing the API key")
+
+    csub.add_parser("list", help="List all objects currently in the corpus")
+    csub.add_parser("embed",
+                    help="(Re)fit description embeddings on the current corpus")
+
+    cexp = csub.add_parser("explain",
+                           help="Generate informal explanations for relationship edges (Claude)")
+    cexp.add_argument("--all", action="store_true",
+                      help="Re-explain even relationships that already have a stored explanation")
+    cexp.add_argument("--limit", type=int, default=None,
+                      help="Max number of relationships to process in this run")
+    cexp.add_argument("--api-key", default=None, help="Anthropic API key")
+    cexp.add_argument("--api-key-file", default=None, help="File containing the API key")
+
+    # -- wiki --
+    p = sub.add_parser("wiki", help="Generate the static HTML wiki from the corpus")
+    p.add_argument("--output-dir", default="wiki_out", metavar="DIR",
+                   help="Directory to write the wiki into (default: wiki_out)")
+    p.add_argument("--similar-k", type=int, default=3, metavar="K",
+                   help="How many cross-file similar objects to show per card (default: 3)")
+
+    # -- explore --
+    p = sub.add_parser("explore",
+                       help="Generate an interactive single-file HTML explorer (Phase 3B)")
+    p.add_argument("lean_file", help="Path to a .lean file (must be in the corpus)")
+    p.add_argument("--output", default=None,
+                   help="Output path (default: <stem>_explorer.html alongside the source)")
+    p.add_argument("--similar-k", type=int, default=3, metavar="K",
+                   help="How many cross-file similar objects to show per object (default: 3)")
+
+    # -- serve --
+    p = sub.add_parser("serve",
+                       help="Run a live explorer that writes state changes back to knowledge.json")
+    p.add_argument("lean_file", help="Path to a .lean file (must be in the corpus)")
+    p.add_argument("--similar-k", type=int, default=3, metavar="K",
+                   help="How many cross-file similar objects to show per object (default: 3)")
+    p.add_argument("--host", default="127.0.0.1", help="Bind host (default: 127.0.0.1)")
+    p.add_argument("--port", type=int, default=8765, help="Bind port (default: 8765)")
+    p.add_argument("--no-browser", action="store_true",
+                   help="Don't auto-open the browser on startup")
+
     # -- graph --
     p = sub.add_parser("graph", help="Render the dependency graph as an image")
     p.add_argument("lean_file", help="Path to a .lean file")
@@ -409,6 +603,10 @@ def main() -> None:
         "diff":     _cmd_diff,
         "state":    _cmd_state,
         "graph":    _cmd_graph,
+        "corpus":   _cmd_corpus,
+        "wiki":     _cmd_wiki,
+        "explore":  _cmd_explore,
+        "serve":    _cmd_serve,
     }
     dispatch[args.command](args)
 

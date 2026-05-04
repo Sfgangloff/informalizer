@@ -18,6 +18,12 @@ build/
 
 # Planning / scratch files
 plan.txt
+test.txt
+
+# Runtime artifacts
+.informalizer/corpus.db
+.informalizer/embedder.pkl
+wiki_out/
 
 # IDEs
 .idea/

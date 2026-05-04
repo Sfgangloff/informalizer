@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>example.lean · Informalizer explorer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: #212529;
+  line-height: 1.55;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+header.site-header {
+  padding: 0.9rem 1.4rem;
+  border-bottom: 3px solid #0055cc;
+  background: #fff;
+  flex: 0 0 auto;
+}
+header h1 { font-size: 1.2rem; }
+header .meta { color: #6c757d; font-size: 0.83rem; margin-top: 0.15rem; }
+
+.layout {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+}
+
+/* Source pane */
+.source-pane {
+  overflow-y: auto;
+  border-right: 1px solid #e0e4e8;
+  padding: 0.6rem 0;
+  background: #fafbfc;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-size: 0.86rem;
+}
+.srcrow {
+  display: flex;
+  white-space: pre;
+  padding: 0 1rem;
+}
+.srcrow:hover { background: #f0f2f5; }
+.lineno {
+  flex: 0 0 3.5rem;
+  text-align: right;
+  padding-right: 0.9rem;
+  color: #adb5bd;
+  user-select: none;
+}
+.srccode { flex: 1 1 auto; }
+.obj-ref {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 2px;
+  border-bottom: 2px solid transparent;
+  transition: background 0.1s;
+}
+.obj-ref:hover { background: rgba(0, 85, 204, 0.12); }
+.obj-ref.active { background: rgba(0, 85, 204, 0.2); border-bottom-color: #0055cc; }
+.obj-ref.ks-known    { border-bottom-color: #1a5c2a; }
+.obj-ref.ks-learning { border-bottom-color: #b07a1f; }
+.obj-ref.ks-unknown  { border-bottom-color: #c8313a; }
+
+/* Details pane */
+.details-pane {
+  overflow-y: auto;
+  padding: 1.2rem 1.6rem;
+}
+.details-pane .placeholder {
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 2rem;
+  text-align: center;
+}
+.details-header { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.details-header h2 { font-size: 1.1rem; }
+.details-meta { color: #6c757d; font-size: 0.82rem; margin: 0.2rem 0 0.9rem; }
+
+code {
+  background: #f3f4f6;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+pre {
+  background: #f6f8fa;
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid #e0e4e8;
+  margin: 0.4rem 0 0.8rem;
+}
+pre code { background: none; padding: 0; font-size: 0.85em; }
+
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 3px;
+  font-size: 0.75em;
+  font-weight: 700;
+  white-space: nowrap;
+}
+code.kind { background: #e8f0fe; color: #1a3c8e; padding: 0.1em 0.4em; }
+
+.ks-controls { margin: 0.5rem 0 1rem; font-size: 0.88em; }
+.ks-controls label { color: #495057; margin-right: 0.4rem; }
+.ks-controls select { padding: 0.2rem 0.4rem; border: 1px solid #ced4da; border-radius: 4px; }
+
+.section h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6c757d;
+  margin: 1rem 0 0.4rem;
+}
+.section ul { list-style: none; margin: 0; padding: 0; }
+.section li { padding: 0.25rem 0; }
+.section .obj-link {
+  cursor: pointer;
+  color: #0055cc;
+}
+.section .obj-link:hover { text-decoration: underline; }
+.section .rel-text { color: #495057; font-size: 0.88em; display: block; margin-left: 0.4rem; }
+.section .meta { color: #adb5bd; font-size: 0.82em; margin-left: 0.3rem; }
+
+.ks-dot {
+  display: inline-block;
+  width: 0.6em;
+  height: 0.6em;
+  border-radius: 50%;
+  margin-right: 0.4em;
+  vertical-align: middle;
+}
+.ks-dot.ks-known    { background: #1a5c2a; }
+.ks-dot.ks-learning { background: #b07a1f; }
+.ks-dot.ks-unknown  { background: #c8313a; }
+
+.legend { margin-top: 0.4rem; font-size: 0.8rem; color: #6c757d; }
+.legend span { margin-right: 0.8rem; }
+</style>
+</head>
+<body>
+<header class="site-header">
+  <h1>example.lean</h1>
+  <div class="meta">29 objects · 628 lines · generated 2026-05-04</div>
+  <div class="legend">
+    <span><span class="ks-dot ks-known"></span>known</span>
+    <span><span class="ks-dot ks-learning"></span>learning</span>
+    <span><span class="ks-dot ks-unknown"></span>unknown</span>
+    <span style="margin-left:0.6rem; color:#adb5bd;">click any underlined name on the left</span>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="source-pane">
+<div class="srcrow" id="line-1"><span class="lineno">1</span><span class="srccode">/-</span></div>
+<div class="srcrow" id="line-2"><span class="lineno">2</span><span class="srccode">Copyright (c) 2025 Silvère Gangloff. All rights reserved.</span></div>
+<div class="srcrow" id="line-3"><span class="lineno">3</span><span class="srccode">Released under Apache 2.0 license as described in the file LICENSE.</span></div>
+<div class="srcrow" id="line-4"><span class="lineno">4</span><span class="srccode">Authors: Silvère Gangloff</span></div>
+<div class="srcrow" id="line-5"><span class="lineno">5</span><span class="srccode">-/</span></div>
+<div class="srcrow" id="line-6"><span class="lineno">6</span><span class="srccode">module</span></div>
+<div class="srcrow" id="line-7"><span class="lineno">7</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-8"><span class="lineno">8</span><span class="srccode">public import Mathlib.Topology.Constructions</span></div>
+<div class="srcrow" id="line-9"><span class="lineno">9</span><span class="srccode">public import Mathlib.Topology.Separation.Basic</span></div>
+<div class="srcrow" id="line-10"><span class="lineno">10</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-11"><span class="lineno">11</span><span class="srccode">/-!</span></div>
+<div class="srcrow" id="line-12"><span class="lineno">12</span><span class="srccode"># Symbolic dynamics on cancellative monoids</span></div>
+<div class="srcrow" id="line-13"><span class="lineno">13</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-14"><span class="lineno">14</span><span class="srccode">This file develops a minimal API for symbolic dynamics over a</span></div>
+<div class="srcrow" id="line-15"><span class="lineno">15</span><span class="srccode">**left-cancellative monoid** `G`—formally, a structure carrying `[Monoid G]`</span></div>
+<div class="srcrow" id="line-16"><span class="lineno">16</span><span class="srccode">and `[IsLeftCancelMul G]` (which becomes `[AddMonoid G]` and</span></div>
+<div class="srcrow" id="line-17"><span class="lineno">17</span><span class="srccode">`[IsLeftCancelAdd G]` in the additive form). Throughout the documentation we use the</span></div>
+<div class="srcrow" id="line-18"><span class="lineno">18</span><span class="srccode">**additive** notations, which are the most common in symbolic dynamics, although</span></div>
+<div class="srcrow" id="line-19"><span class="lineno">19</span><span class="srccode">all the notions introduced are defined in the multiplicative notations and adapted</span></div>
+<div class="srcrow" id="line-20"><span class="lineno">20</span><span class="srccode">to the additive notation.</span></div>
+<div class="srcrow" id="line-21"><span class="lineno">21</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-22"><span class="lineno">22</span><span class="srccode">Given a finite alphabet `A`, the ambient configuration space is the set of</span></div>
+<div class="srcrow" id="line-23"><span class="lineno">23</span><span class="srccode">functions `G → A`, endowed with the product topology. We define the</span></div>
+<div class="srcrow" id="line-24"><span class="lineno">24</span><span class="srccode">left-translation action, cylinders, finite patterns, their occurrences,</span></div>
+<div class="srcrow" id="line-25"><span class="lineno">25</span><span class="srccode">forbidden sets, and subshifts (closed, shift-invariant subsets). Basic</span></div>
+<div class="srcrow" id="line-26"><span class="lineno">26</span><span class="srccode">topological facts (e.g. cylinders are clopen, occurrence sets are clopen,</span></div>
+<div class="srcrow" id="line-27"><span class="lineno">27</span><span class="srccode">forbidden sets are closed) are proved under discreteness assumptions on</span></div>
+<div class="srcrow" id="line-28"><span class="lineno">28</span><span class="srccode">the alphabet.</span></div>
+<div class="srcrow" id="line-29"><span class="lineno">29</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-30"><span class="lineno">30</span><span class="srccode">The development is generic for left-cancellative monoids. This covers both</span></div>
+<div class="srcrow" id="line-31"><span class="lineno">31</span><span class="srccode">groups (the standard setting of symbolic dynamics) and more general monoids</span></div>
+<div class="srcrow" id="line-32"><span class="lineno">32</span><span class="srccode">where cancellation holds but inverses may not exist. Geometry specific to</span></div>
+<div class="srcrow" id="line-33"><span class="lineno">33</span><span class="srccode">`ℤ^d` (boxes/cubes and the box-based entropy) is deferred to a separate</span></div>
+<div class="srcrow" id="line-34"><span class="lineno">34</span><span class="srccode">specialization.</span></div>
+<div class="srcrow" id="line-35"><span class="lineno">35</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-36"><span class="lineno">36</span><span class="srccode">## Why cancellativity?</span></div>
+<div class="srcrow" id="line-37"><span class="lineno">37</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-38"><span class="lineno">38</span><span class="srccode">Some constructions, such as translating a finite pattern to occur at a point `v`,</span></div>
+<div class="srcrow" id="line-39"><span class="lineno">39</span><span class="srccode">require solving equations of the form `w + v = h`. For this to have a unique</span></div>
+<div class="srcrow" id="line-40"><span class="lineno">40</span><span class="srccode">solution `w` given `h` and `v`, we assume **left-cancellation**:</span></div>
+<div class="srcrow" id="line-41"><span class="lineno">41</span><span class="srccode">if `v + a = v + b` then `a = b`. This allows us to define</span></div>
+<div class="srcrow" id="line-42"><span class="lineno">42</span><span class="srccode">`<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.shift` (which shifts a pattern) without using inverses,</span></div>
+<div class="srcrow" id="line-43"><span class="lineno">43</span><span class="srccode">so that the theory works not only for groups but also for cancellative monoids.</span></div>
+<div class="srcrow" id="line-44"><span class="lineno">44</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-45"><span class="lineno">45</span><span class="srccode">## Main definitions</span></div>
+<div class="srcrow" id="line-46"><span class="lineno">46</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-47"><span class="lineno">47</span><span class="srccode">* `shift g x` — left translation: in additive notation `(shift v x) u = x (v + u)` (using the</span></div>
+<div class="srcrow" id="line-48"><span class="lineno">48</span><span class="srccode">**left** action of `G` on configurations).</span></div>
+<div class="srcrow" id="line-49"><span class="lineno">49</span><span class="srccode">* `<span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> U x` — configurations agreeing with `x` on a finite set `U ⊆ G`.</span></div>
+<div class="srcrow" id="line-50"><span class="lineno">50</span><span class="srccode">* `<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G` — a configuration which takes</span></div>
+<div class="srcrow" id="line-51"><span class="lineno">51</span><span class="srccode">default value outside of a finite support, together with this support.</span></div>
+<div class="srcrow" id="line-52"><span class="lineno">52</span><span class="srccode">* `<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.occursInAt p x g` — occurrence of `p` in `x` at translate `g`.</span></div>
+<div class="srcrow" id="line-53"><span class="lineno">53</span><span class="srccode">* `forbidden F` — configurations avoiding every pattern in `F`.</span></div>
+<div class="srcrow" id="line-54"><span class="lineno">54</span><span class="srccode">* `<span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span> A G` — closed, shift-invariant subsets of the full shift.</span></div>
+<div class="srcrow" id="line-55"><span class="lineno">55</span><span class="srccode">* `<span class="obj-ref ks-unknown" data-obj="MulSubshift.ofForbidden">MulSubshift.ofForbidden</span> F` — the subshift defined by forbidding a family of patterns.</span></div>
+<div class="srcrow" id="line-56"><span class="lineno">56</span><span class="srccode">* `subshift_of_finite_type F` — a subshift of finite type defined by a finite set of</span></div>
+<div class="srcrow" id="line-57"><span class="lineno">57</span><span class="srccode">forbidden patterns.</span></div>
+<div class="srcrow" id="line-58"><span class="lineno">58</span><span class="srccode">* `languageOn X U` — the set of patterns of shape `U` obtained by restricting some `x ∈ X`.</span></div>
+<div class="srcrow" id="line-59"><span class="lineno">59</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-60"><span class="lineno">60</span><span class="srccode">## Design choice: ambient vs. inner (subshift-relative) viewpoint</span></div>
+<div class="srcrow" id="line-61"><span class="lineno">61</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-62"><span class="lineno">62</span><span class="srccode">All core notions (shift, <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span>, occurrence, language, …) are defined **in the</span></div>
+<div class="srcrow" id="line-63"><span class="lineno">63</span><span class="srccode">ambient full shift** `G → A`. A subshift is then a closed, invariant subset,</span></div>
+<div class="srcrow" id="line-64"><span class="lineno">64</span><span class="srccode">bundled as `<span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span> A G`. Working inside a subshift is done by restriction.</span></div>
+<div class="srcrow" id="line-65"><span class="lineno">65</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-66"><span class="lineno">66</span><span class="srccode">**Motivation.**</span></div>
+<div class="srcrow" id="line-67"><span class="lineno">67</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-68"><span class="lineno">68</span><span class="srccode">If cylinders and shifts were defined only *inside* a subshift, local ergonomics</span></div>
+<div class="srcrow" id="line-69"><span class="lineno">69</span><span class="srccode">would improve but global operations would become awkward. For instance, to prove</span></div>
+<div class="srcrow" id="line-70"><span class="lineno">70</span><span class="srccode">that for finite shape `U`:</span></div>
+<div class="srcrow" id="line-71"><span class="lineno">71</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-72"><span class="lineno">72</span><span class="srccode">`languageOn (X ∪ Y) U = languageOn X U ∪ languageOn Y U,`</span></div>
+<div class="srcrow" id="line-73"><span class="lineno">73</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-74"><span class="lineno">74</span><span class="srccode">one must eventually move both sides to the ambient pattern type. Similar issues</span></div>
+<div class="srcrow" id="line-75"><span class="lineno">75</span><span class="srccode">arise for intersections, factors, and products. By contrast, with ambient</span></div>
+<div class="srcrow" id="line-76"><span class="lineno">76</span><span class="srccode">definitions these set-theoretic identities are tautological.</span></div>
+<div class="srcrow" id="line-77"><span class="lineno">77</span><span class="srccode">Thus the file develops the theory ambiently, and subshifts reuse it by restriction.</span></div>
+<div class="srcrow" id="line-78"><span class="lineno">78</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-79"><span class="lineno">79</span><span class="srccode">**Working inside a subshift.**</span></div>
+<div class="srcrow" id="line-80"><span class="lineno">80</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-81"><span class="lineno">81</span><span class="srccode">For `Y : <span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span> A G`, cylinders and occurrence sets *inside `Y`* are simply</span></div>
+<div class="srcrow" id="line-82"><span class="lineno">82</span><span class="srccode">preimages of the ambient ones under the inclusion `Y → (G → A)`. For example:</span></div>
+<div class="srcrow" id="line-83"><span class="lineno">83</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-84"><span class="lineno">84</span><span class="srccode">`{ y : Y | ∀ i ∈ U, (y : G → A) i = (x : G → A) i } = (Subtype.val) ⁻¹&#x27; (<span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> U (x : G → A)).`</span></div>
+<div class="srcrow" id="line-85"><span class="lineno">85</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-86"><span class="lineno">86</span><span class="srccode">Shift invariance guarantees that the ambient shift restricts to `Y`.</span></div>
+<div class="srcrow" id="line-87"><span class="lineno">87</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-88"><span class="lineno">88</span><span class="srccode">**Ergonomics.**</span></div>
+<div class="srcrow" id="line-89"><span class="lineno">89</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-90"><span class="lineno">90</span><span class="srccode">Thin wrappers (e.g. `<span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span>.shift`, `<span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span>.<span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span>`, `<span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span>.languageOn`)</span></div>
+<div class="srcrow" id="line-91"><span class="lineno">91</span><span class="srccode">may be added for convenience. They introduce no new theory and unfold to the</span></div>
+<div class="srcrow" id="line-92"><span class="lineno">92</span><span class="srccode">ambient definitions.</span></div>
+<div class="srcrow" id="line-93"><span class="lineno">93</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-94"><span class="lineno">94</span><span class="srccode">## Namespacing policy</span></div>
+<div class="srcrow" id="line-95"><span class="lineno">95</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-96"><span class="lineno">96</span><span class="srccode">All ambient definitions live under the namespace `SymbolicDynamics.FullShift`.</span></div>
+<div class="srcrow" id="line-97"><span class="lineno">97</span><span class="srccode">If inner, subshift-relative wrappers are provided, they will be placed in the</span></div>
+<div class="srcrow" id="line-98"><span class="lineno">98</span><span class="srccode">subnamespace `SymbolicDynamics.<span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span>`. This separation avoids name clashes</span></div>
+<div class="srcrow" id="line-99"><span class="lineno">99</span><span class="srccode">between the two viewpoints, since both may naturally want to reuse names like</span></div>
+<div class="srcrow" id="line-100"><span class="lineno">100</span><span class="srccode">`<span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span>`, `shift`, `occursAt`, or `languageOn`.</span></div>
+<div class="srcrow" id="line-101"><span class="lineno">101</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-102"><span class="lineno">102</span><span class="srccode">## Implementation notes</span></div>
+<div class="srcrow" id="line-103"><span class="lineno">103</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-104"><span class="lineno">104</span><span class="srccode">* Openness results for cylinders and occurrence sets use</span></div>
+<div class="srcrow" id="line-105"><span class="lineno">105</span><span class="srccode">  `[DiscreteTopology A]`. Closeness results use `[T1Space A]`.</span></div>
+<div class="srcrow" id="line-106"><span class="lineno">106</span><span class="srccode">-/</span></div>
+<div class="srcrow" id="line-107"><span class="lineno">107</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-108"><span class="lineno">108</span><span class="srccode">@[expose] public section</span></div>
+<div class="srcrow" id="line-109"><span class="lineno">109</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-110"><span class="lineno">110</span><span class="srccode">noncomputable section</span></div>
+<div class="srcrow" id="line-111"><span class="lineno">111</span><span class="srccode">open Set Topology</span></div>
+<div class="srcrow" id="line-112"><span class="lineno">112</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-113"><span class="lineno">113</span><span class="srccode">namespace SymbolicDynamics</span></div>
+<div class="srcrow" id="line-114"><span class="lineno">114</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-115"><span class="lineno">115</span><span class="srccode">namespace FullShift</span></div>
+<div class="srcrow" id="line-116"><span class="lineno">116</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-117"><span class="lineno">117</span><span class="srccode">/-! ## Full shift and shift action -/</span></div>
+<div class="srcrow" id="line-118"><span class="lineno">118</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-119"><span class="lineno">119</span><span class="srccode">section ShiftDefinition</span></div>
+<div class="srcrow" id="line-120"><span class="lineno">120</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-121"><span class="lineno">121</span><span class="srccode">variable {A G : Type*} [Monoid G]</span></div>
+<div class="srcrow" id="line-122"><span class="lineno">122</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-123"><span class="lineno">123</span><span class="srccode">/-- The **left-translation shift** on configurations.</span></div>
+<div class="srcrow" id="line-124"><span class="lineno">124</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-125"><span class="lineno">125</span><span class="srccode">We call *configuration* an element of `G → A`.</span></div>
+<div class="srcrow" id="line-126"><span class="lineno">126</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-127"><span class="lineno">127</span><span class="srccode">Given a configuration `x : G → A` and an element `g : G` of the monoid, the shifted configuration</span></div>
+<div class="srcrow" id="line-128"><span class="lineno">128</span><span class="srccode">`<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g x` is defined by `(<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g x) h = x (g * h)`.</span></div>
+<div class="srcrow" id="line-129"><span class="lineno">129</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-130"><span class="lineno">130</span><span class="srccode">Intuitively, this moves the whole configuration &quot;in the direction of `g`&quot;: the value</span></div>
+<div class="srcrow" id="line-131"><span class="lineno">131</span><span class="srccode">at position `h` in the shifted configuration is the value that was at position</span></div>
+<div class="srcrow" id="line-132"><span class="lineno">132</span><span class="srccode">`g * h` in the original one.</span></div>
+<div class="srcrow" id="line-133"><span class="lineno">133</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-134"><span class="lineno">134</span><span class="srccode">For example, if `G = ℤ` (with addition) and `A = {0, 1}`, then</span></div>
+<div class="srcrow" id="line-135"><span class="lineno">135</span><span class="srccode">`<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> 1 x` is the sequence obtained from `x` by shifting every symbol one</span></div>
+<div class="srcrow" id="line-136"><span class="lineno">136</span><span class="srccode">step to the left. -/</span></div>
+<div class="srcrow" id="line-137"><span class="lineno">137</span><span class="srccode">@[to_additive /-- The **left-translation shift** on configurations, in additive notation.</span></div>
+<div class="srcrow" id="line-138"><span class="lineno">138</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-139"><span class="lineno">139</span><span class="srccode">We call *configuration* an element of `G → A`.</span></div>
+<div class="srcrow" id="line-140"><span class="lineno">140</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-141"><span class="lineno">141</span><span class="srccode">Given a configuration `x : G → A` and an element `g : G` of the additive monoid,</span></div>
+<div class="srcrow" id="line-142"><span class="lineno">142</span><span class="srccode">the shifted configuration `shift g x` is defined by `(shift g x) h = x (g + h)`.</span></div>
+<div class="srcrow" id="line-143"><span class="lineno">143</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-144"><span class="lineno">144</span><span class="srccode">Intuitively, this moves the whole configuration &quot;in the direction of `g`&quot;: the value</span></div>
+<div class="srcrow" id="line-145"><span class="lineno">145</span><span class="srccode">at position `h` in the shifted configuration is the value that was at position</span></div>
+<div class="srcrow" id="line-146"><span class="lineno">146</span><span class="srccode">`g + h` in the original one.</span></div>
+<div class="srcrow" id="line-147"><span class="lineno">147</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-148"><span class="lineno">148</span><span class="srccode">For example, if `G = ℤ` and `A = {0, 1}`, then</span></div>
+<div class="srcrow" id="line-149"><span class="lineno">149</span><span class="srccode">`shift 1 x` is the sequence obtained from `x` by shifting every symbol one</span></div>
+<div class="srcrow" id="line-150"><span class="lineno">150</span><span class="srccode">step to the left. -/]</span></div>
+<div class="srcrow" id="line-151"><span class="lineno">151</span><span class="srccode">def <span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> (g : G) (x : G → A) : G → A :=</span></div>
+<div class="srcrow" id="line-152"><span class="lineno">152</span><span class="srccode">  fun h =&gt; x (g * h)</span></div>
+<div class="srcrow" id="line-153"><span class="lineno">153</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-154"><span class="lineno">154</span><span class="srccode">@[to_additive (attr := simp)] lemma <span class="obj-ref ks-unknown" data-obj="mulShift_apply">mulShift_apply</span> (g : G) (x : G → A) (h : G) :</span></div>
+<div class="srcrow" id="line-155"><span class="lineno">155</span><span class="srccode">    <span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g x h = x (g * h) := rfl</span></div>
+<div class="srcrow" id="line-156"><span class="lineno">156</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-157"><span class="lineno">157</span><span class="srccode">@[to_additive (attr := simp)] lemma <span class="obj-ref ks-unknown" data-obj="mulShift_one">mulShift_one</span> (x : G → A) : <span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> (1 : G) x = x := by</span></div>
+<div class="srcrow" id="line-158"><span class="lineno">158</span><span class="srccode">  ext h; simp [<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span>]</span></div>
+<div class="srcrow" id="line-159"><span class="lineno">159</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-160"><span class="lineno">160</span><span class="srccode">/-- Composition of left-translation shifts corresponds to multiplication in the monoid `G`. -/</span></div>
+<div class="srcrow" id="line-161"><span class="lineno">161</span><span class="srccode">@[to_additive] lemma <span class="obj-ref ks-unknown" data-obj="mulShift_mul">mulShift_mul</span> (g₁ g₂ : G) (x : G → A) :</span></div>
+<div class="srcrow" id="line-162"><span class="lineno">162</span><span class="srccode">    <span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> (g₁ * g₂) x = <span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g₂ (<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g₁ x) := by</span></div>
+<div class="srcrow" id="line-163"><span class="lineno">163</span><span class="srccode">  ext h; simp [<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span>, mul_assoc]</span></div>
+<div class="srcrow" id="line-164"><span class="lineno">164</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-165"><span class="lineno">165</span><span class="srccode">variable [TopologicalSpace A]</span></div>
+<div class="srcrow" id="line-166"><span class="lineno">166</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-167"><span class="lineno">167</span><span class="srccode">/-- The left-translation shift is continuous. -/</span></div>
+<div class="srcrow" id="line-168"><span class="lineno">168</span><span class="srccode">@[to_additive (attr := fun_prop)] lemma <span class="obj-ref ks-unknown" data-obj="continuous_mulShift">continuous_mulShift</span> (g : G) :</span></div>
+<div class="srcrow" id="line-169"><span class="lineno">169</span><span class="srccode">    Continuous (<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> (A := A) g) := by</span></div>
+<div class="srcrow" id="line-170"><span class="lineno">170</span><span class="srccode">  -- coordinate projections are continuous; composition preserves continuity</span></div>
+<div class="srcrow" id="line-171"><span class="lineno">171</span><span class="srccode">  unfold <span class="obj-ref ks-known" data-obj="mulShift">mulShift</span></span></div>
+<div class="srcrow" id="line-172"><span class="lineno">172</span><span class="srccode">  fun_prop</span></div>
+<div class="srcrow" id="line-173"><span class="lineno">173</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-174"><span class="lineno">174</span><span class="srccode">end ShiftDefinition</span></div>
+<div class="srcrow" id="line-175"><span class="lineno">175</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-176"><span class="lineno">176</span><span class="srccode">/-! ## Cylinders -/</span></div>
+<div class="srcrow" id="line-177"><span class="lineno">177</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-178"><span class="lineno">178</span><span class="srccode">section Cylinders</span></div>
+<div class="srcrow" id="line-179"><span class="lineno">179</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-180"><span class="lineno">180</span><span class="srccode">variable {A G : Type*}</span></div>
+<div class="srcrow" id="line-181"><span class="lineno">181</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-182"><span class="lineno">182</span><span class="srccode">/-- A *<span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> set* is the set of all configurations that agree with a given</span></div>
+<div class="srcrow" id="line-183"><span class="lineno">183</span><span class="srccode">reference configuration `x` on a fixed finite subset `U` of the index set `G`.</span></div>
+<div class="srcrow" id="line-184"><span class="lineno">184</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-185"><span class="lineno">185</span><span class="srccode">The set `U` is called the *support* of the <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span>.</span></div>
+<div class="srcrow" id="line-186"><span class="lineno">186</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-187"><span class="lineno">187</span><span class="srccode">Intuitively, cylinders specify the &quot;letters&quot; on finitely many coordinates, while</span></div>
+<div class="srcrow" id="line-188"><span class="lineno">188</span><span class="srccode">leaving all other coordinates free. For example, in the full shift `{0, 1}^ℤ`,</span></div>
+<div class="srcrow" id="line-189"><span class="lineno">189</span><span class="srccode">the <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> determined by `U = {0, 1}` and `x 0 = 1, x 1 = 0` consists of all</span></div>
+<div class="srcrow" id="line-190"><span class="lineno">190</span><span class="srccode">bi-infinite sequences of `0`s and `1`s whose entries on positions `0` and `1`</span></div>
+<div class="srcrow" id="line-191"><span class="lineno">191</span><span class="srccode">respectively are `1` and `0`.</span></div>
+<div class="srcrow" id="line-192"><span class="lineno">192</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-193"><span class="lineno">193</span><span class="srccode">When `A` has the discrete topology, <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> sets form a basis of clopen sets</span></div>
+<div class="srcrow" id="line-194"><span class="lineno">194</span><span class="srccode">for the product topology on `G → A`. -/</span></div>
+<div class="srcrow" id="line-195"><span class="lineno">195</span><span class="srccode">def <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> (U : Finset G) (x : G → A) : Set (G → A) :=</span></div>
+<div class="srcrow" id="line-196"><span class="lineno">196</span><span class="srccode">  { y | ∀ i ∈ U, y i = x i }</span></div>
+<div class="srcrow" id="line-197"><span class="lineno">197</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-198"><span class="lineno">198</span><span class="srccode">/-- A <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> set on `U` is the `Set.pi` over `U` of the singletons `{x i}`,</span></div>
+<div class="srcrow" id="line-199"><span class="lineno">199</span><span class="srccode">viewed as a subset of `G → A`. Equivalently, it is the preimage of that product</span></div>
+<div class="srcrow" id="line-200"><span class="lineno">200</span><span class="srccode">of singletons in `U → A` under the restriction map `(G → A) → (U → A)`. -/</span></div>
+<div class="srcrow" id="line-201"><span class="lineno">201</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="cylinder_eq_set_pi">cylinder_eq_set_pi</span> (U : Finset G) (x : G → A) :</span></div>
+<div class="srcrow" id="line-202"><span class="lineno">202</span><span class="srccode">    <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> U x = Set.pi (↑U : Set G) (fun i =&gt; ({x i} : Set A)) := by</span></div>
+<div class="srcrow" id="line-203"><span class="lineno">203</span><span class="srccode">  ext y; simp [<span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span>, Set.pi]</span></div>
+<div class="srcrow" id="line-204"><span class="lineno">204</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-205"><span class="lineno">205</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="mem_cylinder">mem_cylinder</span> {U : Finset G} {x y : G → A} :</span></div>
+<div class="srcrow" id="line-206"><span class="lineno">206</span><span class="srccode">    y ∈ <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> U x ↔ ∀ i ∈ U, y i = x i := Iff.rfl</span></div>
+<div class="srcrow" id="line-207"><span class="lineno">207</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-208"><span class="lineno">208</span><span class="srccode">variable [TopologicalSpace A]</span></div>
+<div class="srcrow" id="line-209"><span class="lineno">209</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-210"><span class="lineno">210</span><span class="srccode">/-- Cylinders are open when `A` is discrete. -/</span></div>
+<div class="srcrow" id="line-211"><span class="lineno">211</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="isOpen_cylinder">isOpen_cylinder</span> [DiscreteTopology A] (U : Finset G) (x : G → A) :</span></div>
+<div class="srcrow" id="line-212"><span class="lineno">212</span><span class="srccode">    IsOpen (<span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> U x) := by</span></div>
+<div class="srcrow" id="line-213"><span class="lineno">213</span><span class="srccode">  simpa [<span class="obj-ref ks-unknown" data-obj="cylinder_eq_set_pi">cylinder_eq_set_pi</span> U x] using isOpen_set_pi (U.finite_toSet) (by simp)</span></div>
+<div class="srcrow" id="line-214"><span class="lineno">214</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-215"><span class="lineno">215</span><span class="srccode">/-- Cylinders are closed when `A` is a T1 Space. -/</span></div>
+<div class="srcrow" id="line-216"><span class="lineno">216</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="isClosed_cylinder">isClosed_cylinder</span> [T1Space A] (U : Finset G) (x : G → A) :</span></div>
+<div class="srcrow" id="line-217"><span class="lineno">217</span><span class="srccode">    IsClosed (<span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> U x) := by</span></div>
+<div class="srcrow" id="line-218"><span class="lineno">218</span><span class="srccode">  simpa [<span class="obj-ref ks-unknown" data-obj="cylinder_eq_set_pi">cylinder_eq_set_pi</span> U x] using isClosed_set_pi (by simp)</span></div>
+<div class="srcrow" id="line-219"><span class="lineno">219</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-220"><span class="lineno">220</span><span class="srccode">end Cylinders</span></div>
+<div class="srcrow" id="line-221"><span class="lineno">221</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-222"><span class="lineno">222</span><span class="srccode">/-! ## Patterns and occurrences -/</span></div>
+<div class="srcrow" id="line-223"><span class="lineno">223</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-224"><span class="lineno">224</span><span class="srccode">/-- A *subshift* on an alphabet `A` is a closed, shift-invariant subset of `G → A`. Formally, it is</span></div>
+<div class="srcrow" id="line-225"><span class="lineno">225</span><span class="srccode">composed of:</span></div>
+<div class="srcrow" id="line-226"><span class="lineno">226</span><span class="srccode">* `carrier`: the underlying set of allowed configurations.</span></div>
+<div class="srcrow" id="line-227"><span class="lineno">227</span><span class="srccode">* `isClosed`: the set is topologically closed in `A^G`.</span></div>
+<div class="srcrow" id="line-228"><span class="lineno">228</span><span class="srccode">* `mapsTo`: the set is invariant under all left-translation shifts</span></div>
+<div class="srcrow" id="line-229"><span class="lineno">229</span><span class="srccode">  `(shift g)`. -/</span></div>
+<div class="srcrow" id="line-230"><span class="lineno">230</span><span class="srccode">structure <span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span> (A : Type*) [TopologicalSpace A] (G : Type*) [AddMonoid G] where</span></div>
+<div class="srcrow" id="line-231"><span class="lineno">231</span><span class="srccode">  /-- The underlying set of configurations (additive monoid version). -/</span></div>
+<div class="srcrow" id="line-232"><span class="lineno">232</span><span class="srccode">  carrier : Set (G → A)</span></div>
+<div class="srcrow" id="line-233"><span class="lineno">233</span><span class="srccode">  /-- Closedness of `carrier`. -/</span></div>
+<div class="srcrow" id="line-234"><span class="lineno">234</span><span class="srccode">  isClosed : IsClosed carrier</span></div>
+<div class="srcrow" id="line-235"><span class="lineno">235</span><span class="srccode">  /-- Shift invariance of `carrier` for the additive shift `shift`. -/</span></div>
+<div class="srcrow" id="line-236"><span class="lineno">236</span><span class="srccode">  mapsTo : ∀ g : G, MapsTo (shift g) carrier carrier</span></div>
+<div class="srcrow" id="line-237"><span class="lineno">237</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-238"><span class="lineno">238</span><span class="srccode">section MulSubshiftDef</span></div>
+<div class="srcrow" id="line-239"><span class="lineno">239</span><span class="srccode">variable (A : Type*) [TopologicalSpace A]</span></div>
+<div class="srcrow" id="line-240"><span class="lineno">240</span><span class="srccode">variable (G : Type*) [Monoid G]</span></div>
+<div class="srcrow" id="line-241"><span class="lineno">241</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-242"><span class="lineno">242</span><span class="srccode">/-- A *subshift* on an alphabet `A` over a multiplicative monoid `G` is a closed,</span></div>
+<div class="srcrow" id="line-243"><span class="lineno">243</span><span class="srccode">shift-invariant subset of `G → A`, where the shift is given by left-multiplication.</span></div>
+<div class="srcrow" id="line-244"><span class="lineno">244</span><span class="srccode">Formally, it is composed of:</span></div>
+<div class="srcrow" id="line-245"><span class="lineno">245</span><span class="srccode">* `carrier`: the underlying set of allowed configurations.</span></div>
+<div class="srcrow" id="line-246"><span class="lineno">246</span><span class="srccode">* `isClosed`: the set is topologically closed in `A^G`.</span></div>
+<div class="srcrow" id="line-247"><span class="lineno">247</span><span class="srccode">* `mapsTo`: the set is invariant under all left-translation shifts</span></div>
+<div class="srcrow" id="line-248"><span class="lineno">248</span><span class="srccode">  `(<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g)`. -/</span></div>
+<div class="srcrow" id="line-249"><span class="lineno">249</span><span class="srccode">@[to_additive existing]</span></div>
+<div class="srcrow" id="line-250"><span class="lineno">250</span><span class="srccode">structure <span class="obj-ref ks-unknown" data-obj="MulSubshift">MulSubshift</span> where</span></div>
+<div class="srcrow" id="line-251"><span class="lineno">251</span><span class="srccode">  /-- The underlying set of configurations. -/</span></div>
+<div class="srcrow" id="line-252"><span class="lineno">252</span><span class="srccode">  carrier : Set (G → A)</span></div>
+<div class="srcrow" id="line-253"><span class="lineno">253</span><span class="srccode">  /-- Closedness of `carrier`. -/</span></div>
+<div class="srcrow" id="line-254"><span class="lineno">254</span><span class="srccode">  isClosed : IsClosed carrier</span></div>
+<div class="srcrow" id="line-255"><span class="lineno">255</span><span class="srccode">  /-- Shift invariance of `carrier`. -/</span></div>
+<div class="srcrow" id="line-256"><span class="lineno">256</span><span class="srccode">  mapsTo : ∀ g : G, MapsTo (<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g) carrier carrier</span></div>
+<div class="srcrow" id="line-257"><span class="lineno">257</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-258"><span class="lineno">258</span><span class="srccode">end MulSubshiftDef</span></div>
+<div class="srcrow" id="line-259"><span class="lineno">259</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-260"><span class="lineno">260</span><span class="srccode">/-- Example: the **full shift** on alphabet `A` over the multiplicative monoid `G`.</span></div>
+<div class="srcrow" id="line-261"><span class="lineno">261</span><span class="srccode">It is the subshift whose underlying set is the set of all configurations</span></div>
+<div class="srcrow" id="line-262"><span class="lineno">262</span><span class="srccode">`G → A`. -/</span></div>
+<div class="srcrow" id="line-263"><span class="lineno">263</span><span class="srccode">@[to_additive fullShift</span></div>
+<div class="srcrow" id="line-264"><span class="lineno">264</span><span class="srccode">/-- Example: the **full shift** on alphabet `A` over the additive monoid `G`.</span></div>
+<div class="srcrow" id="line-265"><span class="lineno">265</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-266"><span class="lineno">266</span><span class="srccode">It is the subshift whose underlying set is the set of all configurations</span></div>
+<div class="srcrow" id="line-267"><span class="lineno">267</span><span class="srccode">`G → A`.</span></div>
+<div class="srcrow" id="line-268"><span class="lineno">268</span><span class="srccode">-/]</span></div>
+<div class="srcrow" id="line-269"><span class="lineno">269</span><span class="srccode">def <span class="obj-ref ks-unknown" data-obj="mulFullShift">mulFullShift</span> (A G) [TopologicalSpace A] [Monoid G] : <span class="obj-ref ks-unknown" data-obj="MulSubshift">MulSubshift</span> A G where</span></div>
+<div class="srcrow" id="line-270"><span class="lineno">270</span><span class="srccode">  carrier := Set.univ</span></div>
+<div class="srcrow" id="line-271"><span class="lineno">271</span><span class="srccode">  isClosed := isClosed_univ</span></div>
+<div class="srcrow" id="line-272"><span class="lineno">272</span><span class="srccode">  mapsTo := fun _ _ _ =&gt; trivial</span></div>
+<div class="srcrow" id="line-273"><span class="lineno">273</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-274"><span class="lineno">274</span><span class="srccode">/-- A *pattern* is a finite configuration in the full shift `A^G`.</span></div>
+<div class="srcrow" id="line-275"><span class="lineno">275</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-276"><span class="lineno">276</span><span class="srccode">It consists of:</span></div>
+<div class="srcrow" id="line-277"><span class="lineno">277</span><span class="srccode">* a full configuration `config : G → A` in the full shift;</span></div>
+<div class="srcrow" id="line-278"><span class="lineno">278</span><span class="srccode">* a finite subset `support : Finset G` of coordinates, called the support of `p`;</span></div>
+<div class="srcrow" id="line-279"><span class="lineno">279</span><span class="srccode">* a proof `condition` that outside `support`, `config` takes the default value of `A`.</span></div>
+<div class="srcrow" id="line-280"><span class="lineno">280</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-281"><span class="lineno">281</span><span class="srccode">Intuitively, a pattern is a &quot;partial configuration&quot; specifying finitely many values of</span></div>
+<div class="srcrow" id="line-282"><span class="lineno">282</span><span class="srccode">a configuration in `G → A` (the rest being `default`).</span></div>
+<div class="srcrow" id="line-283"><span class="lineno">283</span><span class="srccode">Patterns are the basic building blocks used to define subshifts via forbidden configurations.</span></div>
+<div class="srcrow" id="line-284"><span class="lineno">284</span><span class="srccode">Note that each pattern corresponds to a <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span>, which is the set of configurations</span></div>
+<div class="srcrow" id="line-285"><span class="lineno">285</span><span class="srccode">which agree with this pattern on its support. -/</span></div>
+<div class="srcrow" id="line-286"><span class="lineno">286</span><span class="srccode">structure <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> (A : Type*) (G : Type*) [Inhabited A] where</span></div>
+<div class="srcrow" id="line-287"><span class="lineno">287</span><span class="srccode">  /-- The full configuration in the full shift `A^G`. -/</span></div>
+<div class="srcrow" id="line-288"><span class="lineno">288</span><span class="srccode">  config : G → A</span></div>
+<div class="srcrow" id="line-289"><span class="lineno">289</span><span class="srccode">  /-- Finite support of the pattern. -/</span></div>
+<div class="srcrow" id="line-290"><span class="lineno">290</span><span class="srccode">  support : Finset G</span></div>
+<div class="srcrow" id="line-291"><span class="lineno">291</span><span class="srccode">  /-- Outside the support, `config` takes the default value of `A`. -/</span></div>
+<div class="srcrow" id="line-292"><span class="lineno">292</span><span class="srccode">  condition : ∀ g ∉ support, config g = default</span></div>
+<div class="srcrow" id="line-293"><span class="lineno">293</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-294"><span class="lineno">294</span><span class="srccode">section Forbidden</span></div>
+<div class="srcrow" id="line-295"><span class="lineno">295</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-296"><span class="lineno">296</span><span class="srccode">variable {A G : Type*} [Inhabited A] [Monoid G]</span></div>
+<div class="srcrow" id="line-297"><span class="lineno">297</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-298"><span class="lineno">298</span><span class="srccode">/-- `p.mulOccursInAt x g` means that the finite pattern</span></div>
+<div class="srcrow" id="line-299"><span class="lineno">299</span><span class="srccode">`p` appears in the configuration `x`</span></div>
+<div class="srcrow" id="line-300"><span class="lineno">300</span><span class="srccode">at position `g`.</span></div>
+<div class="srcrow" id="line-301"><span class="lineno">301</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-302"><span class="lineno">302</span><span class="srccode">Formally: for every position `h` in the support of `p`, the value of the configuration</span></div>
+<div class="srcrow" id="line-303"><span class="lineno">303</span><span class="srccode">at `g * h` coincides with the value of `p.config` at `h`.</span></div>
+<div class="srcrow" id="line-304"><span class="lineno">304</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-305"><span class="lineno">305</span><span class="srccode">Intuitively, if you shift the configuration `x` by `g` (using `<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g`),</span></div>
+<div class="srcrow" id="line-306"><span class="lineno">306</span><span class="srccode">then on the support of `p` you exactly recover the pattern `p`. This is the basic</span></div>
+<div class="srcrow" id="line-307"><span class="lineno">307</span><span class="srccode">notion of &quot;pattern occurrence&quot; used to define subshifts via forbidden patterns. -/</span></div>
+<div class="srcrow" id="line-308"><span class="lineno">308</span><span class="srccode">@[to_additive <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.occursInAt</span></div>
+<div class="srcrow" id="line-309"><span class="lineno">309</span><span class="srccode">/-- `p.occursInAt x g` means that the finite pattern `p` appears in the configuration `x`</span></div>
+<div class="srcrow" id="line-310"><span class="lineno">310</span><span class="srccode">at position `g`.</span></div>
+<div class="srcrow" id="line-311"><span class="lineno">311</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-312"><span class="lineno">312</span><span class="srccode">Formally: for every position `h` in the support of `p`, the value of the configuration</span></div>
+<div class="srcrow" id="line-313"><span class="lineno">313</span><span class="srccode">at `g + h` coincides with the value of `p.config` at `h`.</span></div>
+<div class="srcrow" id="line-314"><span class="lineno">314</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-315"><span class="lineno">315</span><span class="srccode">Intuitively, if you shift the configuration `x` by `g` (using `shift g`),</span></div>
+<div class="srcrow" id="line-316"><span class="lineno">316</span><span class="srccode">then on the support of `p` you exactly recover the pattern `p`. This is the basic</span></div>
+<div class="srcrow" id="line-317"><span class="lineno">317</span><span class="srccode">notion of &quot;pattern occurrence&quot; used to define subshifts via forbidden patterns. -/]</span></div>
+<div class="srcrow" id="line-318"><span class="lineno">318</span><span class="srccode">def <span class="obj-ref ks-unknown" data-obj="Pattern.mulOccursInAt">Pattern.mulOccursInAt</span> (p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) (x : G → A) (g : G) : Prop :=</span></div>
+<div class="srcrow" id="line-319"><span class="lineno">319</span><span class="srccode">  ∀ (h) (_ : h ∈ p.support), x (g * h) = p.config h</span></div>
+<div class="srcrow" id="line-320"><span class="lineno">320</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-321"><span class="lineno">321</span><span class="srccode">/-- `<span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span> F` is the set of configurations that avoid every pattern in `F`.</span></div>
+<div class="srcrow" id="line-322"><span class="lineno">322</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-323"><span class="lineno">323</span><span class="srccode">Formally: `x ∈ <span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span> F` if and only if for every pattern `p ∈ F` and every</span></div>
+<div class="srcrow" id="line-324"><span class="lineno">324</span><span class="srccode">monoid element `g : G`, the pattern `p` does not occur in `x` at position `g`.</span></div>
+<div class="srcrow" id="line-325"><span class="lineno">325</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-326"><span class="lineno">326</span><span class="srccode">Intuitively, `<span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span> F` is the shift space defined by declaring the finite set</span></div>
+<div class="srcrow" id="line-327"><span class="lineno">327</span><span class="srccode">(or family) of patterns `F` to be *forbidden*. A configuration belongs to the subshift if and only</span></div>
+<div class="srcrow" id="line-328"><span class="lineno">328</span><span class="srccode">it avoids all the forbidden patterns. -/</span></div>
+<div class="srcrow" id="line-329"><span class="lineno">329</span><span class="srccode">@[to_additive forbidden</span></div>
+<div class="srcrow" id="line-330"><span class="lineno">330</span><span class="srccode">/-- `forbidden F` is the set of configurations that avoid every pattern in `F`.</span></div>
+<div class="srcrow" id="line-331"><span class="lineno">331</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-332"><span class="lineno">332</span><span class="srccode">Formally: `x ∈ forbidden F` if and only if for every pattern `p ∈ F` and every</span></div>
+<div class="srcrow" id="line-333"><span class="lineno">333</span><span class="srccode">monoid element `g : G`, the pattern `p` does not occur in `x` at position `g`.</span></div>
+<div class="srcrow" id="line-334"><span class="lineno">334</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-335"><span class="lineno">335</span><span class="srccode">Intuitively, `forbidden F` is the shift space defined by declaring the finite set</span></div>
+<div class="srcrow" id="line-336"><span class="lineno">336</span><span class="srccode">(or family) of patterns `F` to be *forbidden*. A configuration belongs to the subshift if and only</span></div>
+<div class="srcrow" id="line-337"><span class="lineno">337</span><span class="srccode">it avoids all the forbidden patterns. -/]</span></div>
+<div class="srcrow" id="line-338"><span class="lineno">338</span><span class="srccode">def <span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span> (F : Set (<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G)) : Set (G → A) :=</span></div>
+<div class="srcrow" id="line-339"><span class="lineno">339</span><span class="srccode">  { x | ∀ p ∈ F, ∀ g : G, ¬ p.mulOccursInAt x g }</span></div>
+<div class="srcrow" id="line-340"><span class="lineno">340</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-341"><span class="lineno">341</span><span class="srccode">end Forbidden</span></div>
+<div class="srcrow" id="line-342"><span class="lineno">342</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-343"><span class="lineno">343</span><span class="srccode">section OccursInAt</span></div>
+<div class="srcrow" id="line-344"><span class="lineno">344</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-345"><span class="lineno">345</span><span class="srccode">variable {A : Type*} [Inhabited A]</span></div>
+<div class="srcrow" id="line-346"><span class="lineno">346</span><span class="srccode">variable {G : Type*} [Monoid G] [IsLeftCancelMul G]</span></div>
+<div class="srcrow" id="line-347"><span class="lineno">347</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-348"><span class="lineno">348</span><span class="srccode">/-- Translate a finite pattern `p` so that it occurs at the translate `v`, before completing into</span></div>
+<div class="srcrow" id="line-349"><span class="lineno">349</span><span class="srccode">a configuration.</span></div>
+<div class="srcrow" id="line-350"><span class="lineno">350</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-351"><span class="lineno">351</span><span class="srccode">On input `h : G`, we proceed as follows:</span></div>
+<div class="srcrow" id="line-352"><span class="lineno">352</span><span class="srccode">* if `h` lies in the left-translate of the support, i.e. `h ∈ p.support.image (v * ·)`,</span></div>
+<div class="srcrow" id="line-353"><span class="lineno">353</span><span class="srccode">  choose (noncomputably) `w ∈ p.support` with `v * w = h` and return `p.config w`;</span></div>
+<div class="srcrow" id="line-354"><span class="lineno">354</span><span class="srccode">* otherwise return `default`.</span></div>
+<div class="srcrow" id="line-355"><span class="lineno">355</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-356"><span class="lineno">356</span><span class="srccode">This definition does not assume left-cancellation; it only *chooses* a preimage.</span></div>
+<div class="srcrow" id="line-357"><span class="lineno">357</span><span class="srccode">Uniqueness (and the usual equations such as `<span class="obj-ref ks-unknown" data-obj="Pattern.mulShift">Pattern.mulShift</span> p v (v * w) = p.config w`)</span></div>
+<div class="srcrow" id="line-358"><span class="lineno">358</span><span class="srccode">require a left-cancellation hypothesis and are proved in separate lemmas.</span></div>
+<div class="srcrow" id="line-359"><span class="lineno">359</span><span class="srccode">-/</span></div>
+<div class="srcrow" id="line-360"><span class="lineno">360</span><span class="srccode">@[to_additive</span></div>
+<div class="srcrow" id="line-361"><span class="lineno">361</span><span class="srccode">/-- Translate a finite pattern `p` so that it occurs at the translate `v`, before completing into</span></div>
+<div class="srcrow" id="line-362"><span class="lineno">362</span><span class="srccode">a configuration.</span></div>
+<div class="srcrow" id="line-363"><span class="lineno">363</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-364"><span class="lineno">364</span><span class="srccode">On input `h : G`, we proceed as follows:</span></div>
+<div class="srcrow" id="line-365"><span class="lineno">365</span><span class="srccode">* if `h` lies in the left-translate of the support, i.e. `h ∈ p.support.image (v + ·)`,</span></div>
+<div class="srcrow" id="line-366"><span class="lineno">366</span><span class="srccode">  choose (noncomputably) `w ∈ p.support` with `v + w = h` and return `p.config w`;</span></div>
+<div class="srcrow" id="line-367"><span class="lineno">367</span><span class="srccode">* otherwise return `default`.</span></div>
+<div class="srcrow" id="line-368"><span class="lineno">368</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-369"><span class="lineno">369</span><span class="srccode">This definition does not assume left-cancellation; it only *chooses* a preimage.</span></div>
+<div class="srcrow" id="line-370"><span class="lineno">370</span><span class="srccode">Uniqueness (and the usual equations such as `<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.shift p v (v + w) = p.config w`)</span></div>
+<div class="srcrow" id="line-371"><span class="lineno">371</span><span class="srccode">require a left-cancellation hypothesis and are proved in separate lemmas.</span></div>
+<div class="srcrow" id="line-372"><span class="lineno">372</span><span class="srccode">-/]</span></div>
+<div class="srcrow" id="line-373"><span class="lineno">373</span><span class="srccode">protected noncomputable def <span class="obj-ref ks-unknown" data-obj="Pattern.mulShift">Pattern.mulShift</span> (p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) (v : G) : G → A := by</span></div>
+<div class="srcrow" id="line-374"><span class="lineno">374</span><span class="srccode">  classical</span></div>
+<div class="srcrow" id="line-375"><span class="lineno">375</span><span class="srccode">  intro h</span></div>
+<div class="srcrow" id="line-376"><span class="lineno">376</span><span class="srccode">  if hmem : h ∈ p.support.image (v * ·) then</span></div>
+<div class="srcrow" id="line-377"><span class="lineno">377</span><span class="srccode">    -- package existence of a preimage under (v * ·)</span></div>
+<div class="srcrow" id="line-378"><span class="lineno">378</span><span class="srccode">    let ex : ∃ w, w ∈ p.support ∧ v * w = h := by</span></div>
+<div class="srcrow" id="line-379"><span class="lineno">379</span><span class="srccode">      simpa [Finset.mem_image] using hmem</span></div>
+<div class="srcrow" id="line-380"><span class="lineno">380</span><span class="srccode">    exact p.config (Classical.choose ex)</span></div>
+<div class="srcrow" id="line-381"><span class="lineno">381</span><span class="srccode">  else</span></div>
+<div class="srcrow" id="line-382"><span class="lineno">382</span><span class="srccode">    exact default</span></div>
+<div class="srcrow" id="line-383"><span class="lineno">383</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-384"><span class="lineno">384</span><span class="srccode">namespace <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span></span></div>
+<div class="srcrow" id="line-385"><span class="lineno">385</span><span class="srccode">/-- Extract the finite pattern given by restricting a configuration `x : G → A`</span></div>
+<div class="srcrow" id="line-386"><span class="lineno">386</span><span class="srccode">to a finite subset `U : Finset G`.</span></div>
+<div class="srcrow" id="line-387"><span class="lineno">387</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-388"><span class="lineno">388</span><span class="srccode">The pattern has `config g = x g` for `g ∈ U` and `config g = default` outside `U`,</span></div>
+<div class="srcrow" id="line-389"><span class="lineno">389</span><span class="srccode">with support `U`. In other words, `<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.<span class="obj-ref ks-unknown" data-obj="fromConfig">fromConfig</span> x U` is the partial configuration of</span></div>
+<div class="srcrow" id="line-390"><span class="lineno">390</span><span class="srccode">`x` visible on the coordinates in `U`, padded with `default` elsewhere. -/</span></div>
+<div class="srcrow" id="line-391"><span class="lineno">391</span><span class="srccode">noncomputable def <span class="obj-ref ks-unknown" data-obj="fromConfig">fromConfig</span> (x : G → A) (U : Finset G) : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G := by</span></div>
+<div class="srcrow" id="line-392"><span class="lineno">392</span><span class="srccode">  classical</span></div>
+<div class="srcrow" id="line-393"><span class="lineno">393</span><span class="srccode">  exact { config := fun g =&gt; if g ∈ U then x g else default,</span></div>
+<div class="srcrow" id="line-394"><span class="lineno">394</span><span class="srccode">          support := U,</span></div>
+<div class="srcrow" id="line-395"><span class="lineno">395</span><span class="srccode">          condition := fun g hg =&gt; if_neg hg }</span></div>
+<div class="srcrow" id="line-396"><span class="lineno">396</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-397"><span class="lineno">397</span><span class="srccode">/-- On the translated support, `p.<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> v` agrees with `p.config` at the preimage.</span></div>
+<div class="srcrow" id="line-398"><span class="lineno">398</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-399"><span class="lineno">399</span><span class="srccode">More precisely, if `w ∈ p.support`, then at the translated site `v * w`,</span></div>
+<div class="srcrow" id="line-400"><span class="lineno">400</span><span class="srccode">the configuration `p.<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> v` takes the value `p.config w`.</span></div>
+<div class="srcrow" id="line-401"><span class="lineno">401</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-402"><span class="lineno">402</span><span class="srccode">This uses `[IsLeftCancelMul G]` to identify the unique preimage of `v * w`</span></div>
+<div class="srcrow" id="line-403"><span class="lineno">403</span><span class="srccode">under left-multiplication by `v`. -/</span></div>
+<div class="srcrow" id="line-404"><span class="lineno">404</span><span class="srccode">@[to_additive</span></div>
+<div class="srcrow" id="line-405"><span class="lineno">405</span><span class="srccode">  /-- On the translated support, `p.shift v` agrees with `p.config` at the preimage.</span></div>
+<div class="srcrow" id="line-406"><span class="lineno">406</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-407"><span class="lineno">407</span><span class="srccode">  More precisely, if `w ∈ p.support`, then at the translated site `v + w`,</span></div>
+<div class="srcrow" id="line-408"><span class="lineno">408</span><span class="srccode">  the configuration `p.shift v` takes the value `p.config w`.</span></div>
+<div class="srcrow" id="line-409"><span class="lineno">409</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-410"><span class="lineno">410</span><span class="srccode">  This uses `[IsLeftCancelAdd G]` to identify the unique preimage of `v + w`</span></div>
+<div class="srcrow" id="line-411"><span class="lineno">411</span><span class="srccode">  under left-translation by `v`. -/]</span></div>
+<div class="srcrow" id="line-412"><span class="lineno">412</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="mulShift_apply_mul_left_of_mem">mulShift_apply_mul_left_of_mem</span></span></div>
+<div class="srcrow" id="line-413"><span class="lineno">413</span><span class="srccode">    (p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) (v w : G) (hw : w ∈ p.support) :</span></div>
+<div class="srcrow" id="line-414"><span class="lineno">414</span><span class="srccode">    p.<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> v (v * w) = p.config w := by</span></div>
+<div class="srcrow" id="line-415"><span class="lineno">415</span><span class="srccode">  classical</span></div>
+<div class="srcrow" id="line-416"><span class="lineno">416</span><span class="srccode">  -- (v * w) is in the translated support</span></div>
+<div class="srcrow" id="line-417"><span class="lineno">417</span><span class="srccode">  have hmem : (v * w) ∈ p.support.image (v * ·) :=</span></div>
+<div class="srcrow" id="line-418"><span class="lineno">418</span><span class="srccode">    Finset.mem_image.mpr ⟨w, hw, rfl⟩</span></div>
+<div class="srcrow" id="line-419"><span class="lineno">419</span><span class="srccode">  -- existential used in the branch</span></div>
+<div class="srcrow" id="line-420"><span class="lineno">420</span><span class="srccode">  have ex : ∃ w&#x27;, w&#x27; ∈ p.support ∧ v * w&#x27; = v * w := by</span></div>
+<div class="srcrow" id="line-421"><span class="lineno">421</span><span class="srccode">    simpa [Finset.mem_image] using hmem</span></div>
+<div class="srcrow" id="line-422"><span class="lineno">422</span><span class="srccode">  -- open the `if` branch as returned by the definition</span></div>
+<div class="srcrow" id="line-423"><span class="lineno">423</span><span class="srccode">  have h1 : p.<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> v (v * w) = p.config (Classical.choose ex) := by</span></div>
+<div class="srcrow" id="line-424"><span class="lineno">424</span><span class="srccode">    simp [<span class="obj-ref ks-unknown" data-obj="Pattern.mulShift">Pattern.mulShift</span>, hmem]</span></div>
+<div class="srcrow" id="line-425"><span class="lineno">425</span><span class="srccode">  -- the chosen witness equals w by left-cancellation</span></div>
+<div class="srcrow" id="line-426"><span class="lineno">426</span><span class="srccode">  have hwv&#x27; : v * Classical.choose ex = v * w := (Classical.choose_spec ex).2</span></div>
+<div class="srcrow" id="line-427"><span class="lineno">427</span><span class="srccode">  have h_eq : Classical.choose ex = w := mul_left_cancel hwv&#x27;</span></div>
+<div class="srcrow" id="line-428"><span class="lineno">428</span><span class="srccode">  rw [h1, h_eq]</span></div>
+<div class="srcrow" id="line-429"><span class="lineno">429</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-430"><span class="lineno">430</span><span class="srccode">/-- Shifting a configuration commutes with occurrences of a pattern.</span></div>
+<div class="srcrow" id="line-431"><span class="lineno">431</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-432"><span class="lineno">432</span><span class="srccode">Formally: a pattern `p` occurs in the shifted configuration `<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> h x` at</span></div>
+<div class="srcrow" id="line-433"><span class="lineno">433</span><span class="srccode">position `g` if and only if it occurs in the original configuration `x` at</span></div>
+<div class="srcrow" id="line-434"><span class="lineno">434</span><span class="srccode">position `g * h`. -/</span></div>
+<div class="srcrow" id="line-435"><span class="lineno">435</span><span class="srccode">@[to_additive occursInAt_shift</span></div>
+<div class="srcrow" id="line-436"><span class="lineno">436</span><span class="srccode">/-- Shifting a configuration commutes with occurrences of a pattern.</span></div>
+<div class="srcrow" id="line-437"><span class="lineno">437</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-438"><span class="lineno">438</span><span class="srccode">Formally: a pattern `p` occurs in the shifted configuration `shift h x` at</span></div>
+<div class="srcrow" id="line-439"><span class="lineno">439</span><span class="srccode">position `g` if and only if it occurs in the original configuration `x` at</span></div>
+<div class="srcrow" id="line-440"><span class="lineno">440</span><span class="srccode">position `g + h`. -/]</span></div>
+<div class="srcrow" id="line-441"><span class="lineno">441</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="mulOccursInAt_mulShift">mulOccursInAt_mulShift</span> {A G : Type*} [Inhabited A] [Monoid G]</span></div>
+<div class="srcrow" id="line-442"><span class="lineno">442</span><span class="srccode">    (p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) (x : G → A) (g h : G) :</span></div>
+<div class="srcrow" id="line-443"><span class="lineno">443</span><span class="srccode">    p.mulOccursInAt (<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g x) h ↔ p.mulOccursInAt x (g * h) := by</span></div>
+<div class="srcrow" id="line-444"><span class="lineno">444</span><span class="srccode">  simp only [<span class="obj-ref ks-unknown" data-obj="Pattern.mulOccursInAt">Pattern.mulOccursInAt</span>, <span class="obj-ref ks-unknown" data-obj="mulShift_apply">mulShift_apply</span>, mul_assoc]</span></div>
+<div class="srcrow" id="line-445"><span class="lineno">445</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-446"><span class="lineno">446</span><span class="srccode">/-- Configurations that avoid a family `F` of patterns are stable under the shift.</span></div>
+<div class="srcrow" id="line-447"><span class="lineno">447</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-448"><span class="lineno">448</span><span class="srccode">Formally: if `x` avoids every `p ∈ F` at every position, then for any `h : G`,</span></div>
+<div class="srcrow" id="line-449"><span class="lineno">449</span><span class="srccode">the shifted configuration `<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> h x` also avoids every `p ∈ F` at every position. -/</span></div>
+<div class="srcrow" id="line-450"><span class="lineno">450</span><span class="srccode">@[to_additive mapsTo_shift_forbidden</span></div>
+<div class="srcrow" id="line-451"><span class="lineno">451</span><span class="srccode">  /-- Configurations that avoid a family `F` of patterns are stable under the shift.</span></div>
+<div class="srcrow" id="line-452"><span class="lineno">452</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-453"><span class="lineno">453</span><span class="srccode">Formally: if `x` avoids every `p ∈ F` at every position, then for any `h : G`,</span></div>
+<div class="srcrow" id="line-454"><span class="lineno">454</span><span class="srccode">the shifted configuration `shift h x` also avoids every `p ∈ F` at every position. -/]</span></div>
+<div class="srcrow" id="line-455"><span class="lineno">455</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="mapsTo_mulShift_mulForbidden">mapsTo_mulShift_mulForbidden</span> {A G : Type*} [Inhabited A] [Monoid G]</span></div>
+<div class="srcrow" id="line-456"><span class="lineno">456</span><span class="srccode">    (F : Set (<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G)) (h : G) :</span></div>
+<div class="srcrow" id="line-457"><span class="lineno">457</span><span class="srccode">    Set.MapsTo (<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> h) (<span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span> (A := A) (G := G) F) (<span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span> F) := by</span></div>
+<div class="srcrow" id="line-458"><span class="lineno">458</span><span class="srccode">  -- unfold `MapsTo`</span></div>
+<div class="srcrow" id="line-459"><span class="lineno">459</span><span class="srccode">  intro x hx p hp g</span></div>
+<div class="srcrow" id="line-460"><span class="lineno">460</span><span class="srccode">  specialize hx p hp (h * g)</span></div>
+<div class="srcrow" id="line-461"><span class="lineno">461</span><span class="srccode">  contrapose! hx</span></div>
+<div class="srcrow" id="line-462"><span class="lineno">462</span><span class="srccode">  simpa [<span class="obj-ref ks-unknown" data-obj="mulOccursInAt_mulShift">mulOccursInAt_mulShift</span>] using hx</span></div>
+<div class="srcrow" id="line-463"><span class="lineno">463</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-464"><span class="lineno">464</span><span class="srccode">end <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span></span></div>
+<div class="srcrow" id="line-465"><span class="lineno">465</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-466"><span class="lineno">466</span><span class="srccode">open scoped Classical in</span></div>
+<div class="srcrow" id="line-467"><span class="lineno">467</span><span class="srccode">/-- We call *occurrence set* for pattern `p` and position `g` the set of configurations</span></div>
+<div class="srcrow" id="line-468"><span class="lineno">468</span><span class="srccode">in which a pattern `p` occurs at position `g`.</span></div>
+<div class="srcrow" id="line-469"><span class="lineno">469</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-470"><span class="lineno">470</span><span class="srccode">This proves that it is exactly the <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> corresponding to the</span></div>
+<div class="srcrow" id="line-471"><span class="lineno">471</span><span class="srccode">pattern obtained by translating `p` by `g`.</span></div>
+<div class="srcrow" id="line-472"><span class="lineno">472</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-473"><span class="lineno">473</span><span class="srccode">Equivalently, `p.mulOccursInAt x g` iff on every translated site</span></div>
+<div class="srcrow" id="line-474"><span class="lineno">474</span><span class="srccode">`g * w` (with `w ∈ p.support`)</span></div>
+<div class="srcrow" id="line-475"><span class="lineno">475</span><span class="srccode">the configuration `x` agrees with the translated pattern `<span class="obj-ref ks-unknown" data-obj="Pattern.mulShift">Pattern.mulShift</span> p g`.</span></div>
+<div class="srcrow" id="line-476"><span class="lineno">476</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-477"><span class="lineno">477</span><span class="srccode">(This uses `[IsLeftCancelMul G]` to identify the preimage along left-multiplication by `g`.) -/</span></div>
+<div class="srcrow" id="line-478"><span class="lineno">478</span><span class="srccode">@[to_additive occursInAt_eq_cylinder</span></div>
+<div class="srcrow" id="line-479"><span class="lineno">479</span><span class="srccode">  /-- We call *occurrence set* for pattern `p` and position `g` the set of configurations</span></div>
+<div class="srcrow" id="line-480"><span class="lineno">480</span><span class="srccode">in which a pattern `p` occurs at position `g`.</span></div>
+<div class="srcrow" id="line-481"><span class="lineno">481</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-482"><span class="lineno">482</span><span class="srccode">This proves that it is exactly the <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> corresponding to the</span></div>
+<div class="srcrow" id="line-483"><span class="lineno">483</span><span class="srccode">pattern obtained by translating `p` by `g`.</span></div>
+<div class="srcrow" id="line-484"><span class="lineno">484</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-485"><span class="lineno">485</span><span class="srccode">Equivalently, `p.occursInAt x g` iff on every translated site `g + w` (with `w ∈ p.support`)</span></div>
+<div class="srcrow" id="line-486"><span class="lineno">486</span><span class="srccode">the configuration `x` agrees with the translated pattern `<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.shift p g`.</span></div>
+<div class="srcrow" id="line-487"><span class="lineno">487</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-488"><span class="lineno">488</span><span class="srccode">(This uses `[IsLeftCancelMul G]` to identify the preimage along left-multiplication by `g`.) -/]</span></div>
+<div class="srcrow" id="line-489"><span class="lineno">489</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="mulOccursInAt_eq_cylinder">mulOccursInAt_eq_cylinder</span></span></div>
+<div class="srcrow" id="line-490"><span class="lineno">490</span><span class="srccode">    (p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) (g : G) :</span></div>
+<div class="srcrow" id="line-491"><span class="lineno">491</span><span class="srccode">    { x | p.mulOccursInAt x g } = <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span> (p.support.image (g * ·)) (p.<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g) := by</span></div>
+<div class="srcrow" id="line-492"><span class="lineno">492</span><span class="srccode">  ext x; constructor</span></div>
+<div class="srcrow" id="line-493"><span class="lineno">493</span><span class="srccode">  · -- ⇒: from an occurrence, get membership in the <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span></span></div>
+<div class="srcrow" id="line-494"><span class="lineno">494</span><span class="srccode">    intro H u hu</span></div>
+<div class="srcrow" id="line-495"><span class="lineno">495</span><span class="srccode">    rcases Finset.mem_image.mp hu with ⟨w, hw, rfl⟩</span></div>
+<div class="srcrow" id="line-496"><span class="lineno">496</span><span class="srccode">    -- want: x ( w * g) = <span class="obj-ref ks-unknown" data-obj="Pattern.mulShift">Pattern.mulShift</span> p g ( w * g)</span></div>
+<div class="srcrow" id="line-497"><span class="lineno">497</span><span class="srccode">    have hx : x (g * w) = p.config w := H w hw</span></div>
+<div class="srcrow" id="line-498"><span class="lineno">498</span><span class="srccode">    simpa [<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.<span class="obj-ref ks-unknown" data-obj="mulShift_apply_mul_left_of_mem">mulShift_apply_mul_left_of_mem</span> (p := p) (v := g) (w := w) hw] using hx</span></div>
+<div class="srcrow" id="line-499"><span class="lineno">499</span><span class="srccode">  · -- ⇐: from the <span class="obj-ref ks-unknown" data-obj="cylinder">cylinder</span>, recover an occurrence</span></div>
+<div class="srcrow" id="line-500"><span class="lineno">500</span><span class="srccode">    intro H u hu</span></div>
+<div class="srcrow" id="line-501"><span class="lineno">501</span><span class="srccode">    -- H gives equality with the translated pattern on the image</span></div>
+<div class="srcrow" id="line-502"><span class="lineno">502</span><span class="srccode">    have hx : x (g * u) = p.<span class="obj-ref ks-known" data-obj="mulShift">mulShift</span> g (g * u) :=</span></div>
+<div class="srcrow" id="line-503"><span class="lineno">503</span><span class="srccode">      H (g * u) (Finset.mem_image_of_mem (g * ·) hu)</span></div>
+<div class="srcrow" id="line-504"><span class="lineno">504</span><span class="srccode">    -- rewrite the RHS by the “apply_of_mem” lemma</span></div>
+<div class="srcrow" id="line-505"><span class="lineno">505</span><span class="srccode">    simpa [<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.<span class="obj-ref ks-unknown" data-obj="mulShift_apply_mul_left_of_mem">mulShift_apply_mul_left_of_mem</span> (p := p) (v := g) (w := u) hu] using hx</span></div>
+<div class="srcrow" id="line-506"><span class="lineno">506</span><span class="srccode">end OccursInAt</span></div>
+<div class="srcrow" id="line-507"><span class="lineno">507</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-508"><span class="lineno">508</span><span class="srccode">/-! ## Forbidden sets and subshifts -/</span></div>
+<div class="srcrow" id="line-509"><span class="lineno">509</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-510"><span class="lineno">510</span><span class="srccode">section DefSubshiftByForbidden</span></div>
+<div class="srcrow" id="line-511"><span class="lineno">511</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-512"><span class="lineno">512</span><span class="srccode">variable {A : Type*} [TopologicalSpace A] [Inhabited A]</span></div>
+<div class="srcrow" id="line-513"><span class="lineno">513</span><span class="srccode">variable {G : Type*} [Monoid G] [IsLeftCancelMul G]</span></div>
+<div class="srcrow" id="line-514"><span class="lineno">514</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-515"><span class="lineno">515</span><span class="srccode">/-- Occurrence sets are open. -/</span></div>
+<div class="srcrow" id="line-516"><span class="lineno">516</span><span class="srccode">@[to_additive isOpen_occursInAt]</span></div>
+<div class="srcrow" id="line-517"><span class="lineno">517</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="isOpen_mulOccursInAt">isOpen_mulOccursInAt</span> [DiscreteTopology A] (p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) (g : G) :</span></div>
+<div class="srcrow" id="line-518"><span class="lineno">518</span><span class="srccode">    IsOpen { x | p.mulOccursInAt x g } := by</span></div>
+<div class="srcrow" id="line-519"><span class="lineno">519</span><span class="srccode">  simpa [<span class="obj-ref ks-unknown" data-obj="mulOccursInAt_eq_cylinder">mulOccursInAt_eq_cylinder</span>] using <span class="obj-ref ks-unknown" data-obj="isOpen_cylinder">isOpen_cylinder</span> _ _</span></div>
+<div class="srcrow" id="line-520"><span class="lineno">520</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-521"><span class="lineno">521</span><span class="srccode">/-- Avoiding a fixed family of patterns is a closed condition (in the product topology on `G → A`).</span></div>
+<div class="srcrow" id="line-522"><span class="lineno">522</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-523"><span class="lineno">523</span><span class="srccode">Since each occurrence set `{ x | p.mulOccursInAt x v }` is open (when `A` is discrete),</span></div>
+<div class="srcrow" id="line-524"><span class="lineno">524</span><span class="srccode">its complement `{ x | ¬ p.mulOccursInAt x v }` is closed; `forbidden F` is the intersection</span></div>
+<div class="srcrow" id="line-525"><span class="lineno">525</span><span class="srccode">of these closed sets over `p ∈ F` and `v ∈ G`. -/</span></div>
+<div class="srcrow" id="line-526"><span class="lineno">526</span><span class="srccode">@[to_additive isClosed_forbidden /-- Avoiding a fixed family of patterns is a closed</span></div>
+<div class="srcrow" id="line-527"><span class="lineno">527</span><span class="srccode">condition (in the product topology on `G → A`).</span></div>
+<div class="srcrow" id="line-528"><span class="lineno">528</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-529"><span class="lineno">529</span><span class="srccode">Since each occurrence set `{ x | p.occursInAt x v }` is open (when `A` is discrete),</span></div>
+<div class="srcrow" id="line-530"><span class="lineno">530</span><span class="srccode">its complement `{ x | ¬ p.occursInAt x v }` is closed; `forbidden F` is the intersection</span></div>
+<div class="srcrow" id="line-531"><span class="lineno">531</span><span class="srccode">of these closed sets over `p ∈ F` and `v ∈ G`. -/]</span></div>
+<div class="srcrow" id="line-532"><span class="lineno">532</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="isClosed_mulForbidden">isClosed_mulForbidden</span> [DiscreteTopology A] (F : Set (<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G)) :</span></div>
+<div class="srcrow" id="line-533"><span class="lineno">533</span><span class="srccode">    IsClosed (<span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span> F) := by</span></div>
+<div class="srcrow" id="line-534"><span class="lineno">534</span><span class="srccode">  rw [<span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span>]</span></div>
+<div class="srcrow" id="line-535"><span class="lineno">535</span><span class="srccode">  -- Rewrite as an intersection indexed by `p ∈ F` and `v : G`.</span></div>
+<div class="srcrow" id="line-536"><span class="lineno">536</span><span class="srccode">  have h_eq : {x | ∀ p ∈ F, ∀ v : G, ¬ p.mulOccursInAt x v}</span></div>
+<div class="srcrow" id="line-537"><span class="lineno">537</span><span class="srccode">    = ⋂ (p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) (hp : p ∈ F) (v : G), {x | ¬ p.mulOccursInAt x v} := by ext; simp</span></div>
+<div class="srcrow" id="line-538"><span class="lineno">538</span><span class="srccode">  rw [h_eq]</span></div>
+<div class="srcrow" id="line-539"><span class="lineno">539</span><span class="srccode">  -- Now prove that this big intersection is closed.</span></div>
+<div class="srcrow" id="line-540"><span class="lineno">540</span><span class="srccode">  refine isClosed_iInter (fun p =&gt; ?_)</span></div>
+<div class="srcrow" id="line-541"><span class="lineno">541</span><span class="srccode">  refine isClosed_iInter (fun hp =&gt; ?_)</span></div>
+<div class="srcrow" id="line-542"><span class="lineno">542</span><span class="srccode">  refine isClosed_iInter (fun v =&gt; ?_)</span></div>
+<div class="srcrow" id="line-543"><span class="lineno">543</span><span class="srccode">  -- For each `p, hp, v`, the section is the complement of an open occurrence set.</span></div>
+<div class="srcrow" id="line-544"><span class="lineno">544</span><span class="srccode">  have : {x | ¬ p.mulOccursInAt x v} = {x | p.mulOccursInAt x v}ᶜ := by ext; simp</span></div>
+<div class="srcrow" id="line-545"><span class="lineno">545</span><span class="srccode">  simpa [this, isClosed_compl_iff] using <span class="obj-ref ks-unknown" data-obj="isOpen_mulOccursInAt">isOpen_mulOccursInAt</span> (A := A) (G := G) p v</span></div>
+<div class="srcrow" id="line-546"><span class="lineno">546</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-547"><span class="lineno">547</span><span class="srccode">/-- Occurrence sets are closed. -/</span></div>
+<div class="srcrow" id="line-548"><span class="lineno">548</span><span class="srccode">@[to_additive isClosed_occursInAt]</span></div>
+<div class="srcrow" id="line-549"><span class="lineno">549</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="isClosed_mulOccursInAt">isClosed_mulOccursInAt</span> [T1Space A] (p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) (g : G) :</span></div>
+<div class="srcrow" id="line-550"><span class="lineno">550</span><span class="srccode">    IsClosed { x | p.mulOccursInAt x g } := by</span></div>
+<div class="srcrow" id="line-551"><span class="lineno">551</span><span class="srccode">  simpa [<span class="obj-ref ks-unknown" data-obj="mulOccursInAt_eq_cylinder">mulOccursInAt_eq_cylinder</span>] using <span class="obj-ref ks-unknown" data-obj="isClosed_cylinder">isClosed_cylinder</span> _ _</span></div>
+<div class="srcrow" id="line-552"><span class="lineno">552</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-553"><span class="lineno">553</span><span class="srccode">/-- The subshift defined by a family of forbidden patterns `F`.</span></div>
+<div class="srcrow" id="line-554"><span class="lineno">554</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-555"><span class="lineno">555</span><span class="srccode">This is a standard way to construct subshifts:</span></div>
+<div class="srcrow" id="line-556"><span class="lineno">556</span><span class="srccode">`<span class="obj-ref ks-unknown" data-obj="MulSubshift.ofForbidden">MulSubshift.ofForbidden</span> F` consists of all configurations `x : G → A` in which no pattern</span></div>
+<div class="srcrow" id="line-557"><span class="lineno">557</span><span class="srccode">`p ∈ F` occurs at any position.</span></div>
+<div class="srcrow" id="line-558"><span class="lineno">558</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-559"><span class="lineno">559</span><span class="srccode">Formally:</span></div>
+<div class="srcrow" id="line-560"><span class="lineno">560</span><span class="srccode">* the carrier is `forbidden F` (configurations avoiding `F`),</span></div>
+<div class="srcrow" id="line-561"><span class="lineno">561</span><span class="srccode">* it is closed because each occurrence set is open, and</span></div>
+<div class="srcrow" id="line-562"><span class="lineno">562</span><span class="srccode">* it is shift-invariant since avoidance is preserved by shifts. -/</span></div>
+<div class="srcrow" id="line-563"><span class="lineno">563</span><span class="srccode">@[to_additive /-- The subshift defined by a family of forbidden patterns `F`.</span></div>
+<div class="srcrow" id="line-564"><span class="lineno">564</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-565"><span class="lineno">565</span><span class="srccode">This is a standard way to construct subshifts:</span></div>
+<div class="srcrow" id="line-566"><span class="lineno">566</span><span class="srccode">`<span class="obj-ref ks-unknown" data-obj="Subshift">Subshift</span>.ofForbidden F` consists of all configurations `x : G → A` in which no pattern</span></div>
+<div class="srcrow" id="line-567"><span class="lineno">567</span><span class="srccode">`p ∈ F` occurs at any position.</span></div>
+<div class="srcrow" id="line-568"><span class="lineno">568</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-569"><span class="lineno">569</span><span class="srccode">Formally:</span></div>
+<div class="srcrow" id="line-570"><span class="lineno">570</span><span class="srccode">* the carrier is `forbidden F` (configurations avoiding `F`),</span></div>
+<div class="srcrow" id="line-571"><span class="lineno">571</span><span class="srccode">* it is closed because each occurrence set is open, and</span></div>
+<div class="srcrow" id="line-572"><span class="lineno">572</span><span class="srccode">* it is shift-invariant since avoidance is preserved by shifts. -/]</span></div>
+<div class="srcrow" id="line-573"><span class="lineno">573</span><span class="srccode">def <span class="obj-ref ks-unknown" data-obj="MulSubshift.ofForbidden">MulSubshift.ofForbidden</span> [DiscreteTopology A] (F : Set (<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G)) : <span class="obj-ref ks-unknown" data-obj="MulSubshift">MulSubshift</span> A G where</span></div>
+<div class="srcrow" id="line-574"><span class="lineno">574</span><span class="srccode">  carrier := <span class="obj-ref ks-unknown" data-obj="mulForbidden">mulForbidden</span> F</span></div>
+<div class="srcrow" id="line-575"><span class="lineno">575</span><span class="srccode">  isClosed := <span class="obj-ref ks-unknown" data-obj="isClosed_mulForbidden">isClosed_mulForbidden</span> F</span></div>
+<div class="srcrow" id="line-576"><span class="lineno">576</span><span class="srccode">  mapsTo := <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.<span class="obj-ref ks-unknown" data-obj="mapsTo_mulShift_mulForbidden">mapsTo_mulShift_mulForbidden</span> F</span></div>
+<div class="srcrow" id="line-577"><span class="lineno">577</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-578"><span class="lineno">578</span><span class="srccode">end DefSubshiftByForbidden</span></div>
+<div class="srcrow" id="line-579"><span class="lineno">579</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-580"><span class="lineno">580</span><span class="srccode">section Language</span></div>
+<div class="srcrow" id="line-581"><span class="lineno">581</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-582"><span class="lineno">582</span><span class="srccode">variable {A : Type*} [Fintype A] [Inhabited A]</span></div>
+<div class="srcrow" id="line-583"><span class="lineno">583</span><span class="srccode">variable {G : Type*}</span></div>
+<div class="srcrow" id="line-584"><span class="lineno">584</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-585"><span class="lineno">585</span><span class="srccode">/-- Patterns with support exactly `U` form a finite set. -/</span></div>
+<div class="srcrow" id="line-586"><span class="lineno">586</span><span class="srccode">lemma <span class="obj-ref ks-unknown" data-obj="finite_setOf_pattern_support_eq">finite_setOf_pattern_support_eq</span></span></div>
+<div class="srcrow" id="line-587"><span class="lineno">587</span><span class="srccode">    {A G : Type*} [Finite A] [Inhabited A]</span></div>
+<div class="srcrow" id="line-588"><span class="lineno">588</span><span class="srccode">    (U : Finset G) :</span></div>
+<div class="srcrow" id="line-589"><span class="lineno">589</span><span class="srccode">    ({p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G | p.support = U}).Finite := by</span></div>
+<div class="srcrow" id="line-590"><span class="lineno">590</span><span class="srccode">  -- 1. Upgrade Finite A to Fintype A locally</span></div>
+<div class="srcrow" id="line-591"><span class="lineno">591</span><span class="srccode">  cases nonempty_fintype A</span></div>
+<div class="srcrow" id="line-592"><span class="lineno">592</span><span class="srccode">  classical</span></div>
+<div class="srcrow" id="line-593"><span class="lineno">593</span><span class="srccode">  -- Patterns with support U biject with (U → A) via restriction/extension</span></div>
+<div class="srcrow" id="line-594"><span class="lineno">594</span><span class="srccode">  let e : { p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G // p.support = U } ≃ (U → A) :=</span></div>
+<div class="srcrow" id="line-595"><span class="lineno">595</span><span class="srccode">  { toFun := fun p i =&gt; p.1.config i.1</span></div>
+<div class="srcrow" id="line-596"><span class="lineno">596</span><span class="srccode">    invFun := fun f =&gt; ⟨{ config := fun g =&gt; if h : g ∈ U then f ⟨g, h⟩ else default,</span></div>
+<div class="srcrow" id="line-597"><span class="lineno">597</span><span class="srccode">                           support := U,</span></div>
+<div class="srcrow" id="line-598"><span class="lineno">598</span><span class="srccode">                           condition := fun g hg =&gt; by simp [hg] }, rfl⟩</span></div>
+<div class="srcrow" id="line-599"><span class="lineno">599</span><span class="srccode">    left_inv := by</span></div>
+<div class="srcrow" id="line-600"><span class="lineno">600</span><span class="srccode">      rintro ⟨⟨cfg, dom, cond⟩, hU⟩</span></div>
+<div class="srcrow" id="line-601"><span class="lineno">601</span><span class="srccode">      simp only at hU; subst hU</span></div>
+<div class="srcrow" id="line-602"><span class="lineno">602</span><span class="srccode">      apply Subtype.ext</span></div>
+<div class="srcrow" id="line-603"><span class="lineno">603</span><span class="srccode">      simp only [<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.mk.injEq, and_true]</span></div>
+<div class="srcrow" id="line-604"><span class="lineno">604</span><span class="srccode">      funext g</span></div>
+<div class="srcrow" id="line-605"><span class="lineno">605</span><span class="srccode">      by_cases hg : g ∈ dom</span></div>
+<div class="srcrow" id="line-606"><span class="lineno">606</span><span class="srccode">      · simp [hg]</span></div>
+<div class="srcrow" id="line-607"><span class="lineno">607</span><span class="srccode">      · simp [hg, cond g hg]</span></div>
+<div class="srcrow" id="line-608"><span class="lineno">608</span><span class="srccode">    right_inv := fun f =&gt; by ext i; simp [i.2] }</span></div>
+<div class="srcrow" id="line-609"><span class="lineno">609</span><span class="srccode">  let : Fintype { p : <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G | p.support = U } := Fintype.ofEquiv (U → A) e.symm</span></div>
+<div class="srcrow" id="line-610"><span class="lineno">610</span><span class="srccode">  apply toFinite</span></div>
+<div class="srcrow" id="line-611"><span class="lineno">611</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-612"><span class="lineno">612</span><span class="srccode">/-- The language of a set of configurations `X` on a finite shape `U`.</span></div>
+<div class="srcrow" id="line-613"><span class="lineno">613</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-614"><span class="lineno">614</span><span class="srccode">This is the set of all finite patterns obtained by restricting some configuration</span></div>
+<div class="srcrow" id="line-615"><span class="lineno">615</span><span class="srccode">`x ∈ X` to `U`. -/</span></div>
+<div class="srcrow" id="line-616"><span class="lineno">616</span><span class="srccode">def <span class="obj-ref ks-unknown" data-obj="LanguageOn">LanguageOn</span> (X : Set (G → A)) (U : Finset G) : Set (<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) :=</span></div>
+<div class="srcrow" id="line-617"><span class="lineno">617</span><span class="srccode">  { p | ∃ x ∈ X, <span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span>.<span class="obj-ref ks-unknown" data-obj="fromConfig">fromConfig</span> x U = p }</span></div>
+<div class="srcrow" id="line-618"><span class="lineno">618</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-619"><span class="lineno">619</span><span class="srccode">/-- The language of a subshift `Y` on a finite shape `U`. -/</span></div>
+<div class="srcrow" id="line-620"><span class="lineno">620</span><span class="srccode">def <span class="obj-ref ks-unknown" data-obj="MulSubshift.languageOn">MulSubshift.languageOn</span> {A G} [TopologicalSpace A] [Inhabited A] [Monoid G]</span></div>
+<div class="srcrow" id="line-621"><span class="lineno">621</span><span class="srccode">    (Y : <span class="obj-ref ks-unknown" data-obj="MulSubshift">MulSubshift</span> A G) (U : Finset G) : Set (<span class="obj-ref ks-unknown" data-obj="Pattern">Pattern</span> A G) :=</span></div>
+<div class="srcrow" id="line-622"><span class="lineno">622</span><span class="srccode">  SymbolicDynamics.FullShift.<span class="obj-ref ks-unknown" data-obj="LanguageOn">LanguageOn</span> (A := A) (G := G) Y.carrier U</span></div>
+<div class="srcrow" id="line-623"><span class="lineno">623</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-624"><span class="lineno">624</span><span class="srccode">end Language</span></div>
+<div class="srcrow" id="line-625"><span class="lineno">625</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-626"><span class="lineno">626</span><span class="srccode">end FullShift</span></div>
+<div class="srcrow" id="line-627"><span class="lineno">627</span><span class="srccode">&nbsp;</span></div>
+<div class="srcrow" id="line-628"><span class="lineno">628</span><span class="srccode">end SymbolicDynamics</span></div>
+  </div>
+  <div class="details-pane" id="details">
+    <div class="placeholder">Select an object on the left to see details.</div>
+  </div>
+</div>
+
+<script id="data" type="application/json">
+{"fileKey": "/Users/silveregangloff/Desktop/Informalizer/examples/example.lean", "objects": {"mulShift": {"name": "mulShift", "naturalName": "Left-Translation Shift on Configurations", "kind": "def", "signature": "def mulShift (g : G) (x : G \u2192 A) : G \u2192 A", "descriptionHtml": "<p>This defines the <strong>left-multiplication shift<\/strong> of a configuration <code>x : G \u2192 A<\/code> by a group element <code>g : G<\/code>. The resulting configuration <code>mulShift g x : G \u2192 A<\/code> is given by <code>(mulShift g x) h = x (g * h)<\/code>, i.e., the value at position <code>h<\/code> in the shifted configuration is the value that was at position <code>g * h<\/code> in the original. Intuitively, this \"pulls back\" the configuration along left-multiplication by <code>g<\/code>, shifting the entire pattern through the group.<\/p>", "exampleHtml": "", "lineStart": 151, "lineEnd": 153, "state": "known", "dependsOn": [], "usedByInFile": [{"name": "mulShift_apply", "informal": "The lemma `mulShift_apply` provides the pointwise evaluation rule for the operation defined in `mulShift`: it confirms that the shifted configuration `mulShift g f` evaluated at `x` equals `f(g * x)`, making the definition of `mulShift` explicitly computable at individual points."}, {"name": "mulShift_one", "informal": "The lemma directly invokes the definition of `mulShift` and verifies that when the shifting element is the identity 1, left-multiplication by 1 fixes every group element, so the pulled-back configuration coincides with the original."}, {"name": "mulShift_mul", "informal": "The lemma directly uses the `mulShift` operation to express a compatibility law: it asserts that applying `mulShift` twice in succession (first by $g_1$, then by $g_2$) equals a single `mulShift` by the product $g_1 g_2$, confirming that `mulShift` defines a group action."}, {"name": "continuous_mulShift", "informal": "The continuity lemma (A) establishes that the map `f \u21a6 mulShift g f` on the function space `C(G, \u03b1)` is continuous, so B provides the precise operation whose continuity is being asserted in A."}, {"name": "MulSubshift", "informal": "The structure `MulSubshift` uses `mulShift` to specify the invariance condition: the set `S` of configurations must be closed under the left-multiplication shift action defined by `mulShift`, meaning that shifting any configuration in `S` by any group element again yields a configuration in `S`."}, {"name": "Pattern.mulShift", "informal": "`Pattern.mulShift` uses `mulShift` to embed the finite pattern into the full configuration: after choosing the preimage `w` of `h` under left-translation by `v`, it applies the pullback-by-multiplication shift to recover the pattern's value at the correct group position."}, {"name": "mulShift_apply_mul_left_of_mem", "informal": "The lemma directly concerns the function defined in B: it characterizes how the left-multiplication shift `mulShift v p` behaves at translated points, showing that evaluating the shifted pattern at `v * w` recovers the original value at `w`, which follows immediately from B's pullback definition."}, {"name": "mulOccursInAt_mulShift", "informal": "The lemma directly characterizes how occurrence-checking interacts with the shift operation defined in B: it asserts that checking for pattern `p` in the shifted configuration `mulShift g x` at position `h` reduces, by unfolding the definition of `mulShift`, to checking for `p` in `x` at position `g * h`."}, {"name": "mapsTo_mulShift_mulForbidden", "informal": "The lemma directly uses the shift operation defined in B as its central object of study, proving that applying a left-multiplication shift by any group element preserves the property of avoiding all forbidden patterns \u2014 that is, `mulShift g` restricts to a self-map of the subshift defined by `F`."}, {"name": "mulOccursInAt_eq_cylinder", "informal": "The occurrence set lemma uses `mulShift` to express the cylinder condition: a configuration `x` contains pattern `p` at position `g` precisely when `x` agrees with `mulShift g p` on the translated support, making `mulShift` the concrete tool for encoding \"pattern translated to position `g`\" as a cylinder constraint."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mulShift_apply": {"name": "mulShift_apply", "naturalName": "Multiplication-Shift Evaluation Lemma", "kind": "lemma", "signature": "@[to_additive (attr", "descriptionHtml": "<p>This lemma states that applying a \"multiplication-shift\" operation \u2014 which combines a group element with a periodic map \u2014 evaluates pointwise by multiplying the group element into the argument before applying the map. Specifically, if <code>f<\/code> is a map periodic under some subgroup action, then the shifted version <code>mulShift g f<\/code> at a point <code>x<\/code> equals <code>f(g * x)<\/code> (or the additive analogue <code>f(g + x)<\/code>). The <code>@[to_additive]<\/code> attribute automatically generates the corresponding additive version of the lemma.<\/p>", "exampleHtml": "", "lineStart": 154, "lineEnd": 156, "state": "unknown", "dependsOn": [{"name": "mulShift", "informal": "The lemma `mulShift_apply` provides the pointwise evaluation rule for the operation defined in `mulShift`: it confirms that the shifted configuration `mulShift g f` evaluated at `x` equals `f(g * x)`, making the definition of `mulShift` explicitly computable at individual points."}], "usedByInFile": [{"name": "mulOccursInAt_mulShift", "informal": "Lemma A uses Lemma B to unfold the definition of the shifted configuration: by applying B to evaluate `mulShift g x` pointwise as `x(g \u00b7 h)`, the occurrence condition at position `h` in the shifted configuration directly reduces to the occurrence condition at `g \u00b7 h` in the original."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mulShift_one": {"name": "mulShift_one", "naturalName": "Multiplication Shift by One", "kind": "lemma", "signature": "@[to_additive (attr", "descriptionHtml": "<p>This lemma states that shifting a function by the multiplicative identity (1) leaves it unchanged: for any function <code>f<\/code> from a type with a <code>One<\/code> instance, <code>mulShift f 1 = f<\/code>. In other words, the operation of \"multiplying the argument by 1 before applying f\" is the same as just applying f directly, since multiplying by 1 is the identity.<\/p>", "exampleHtml": "", "lineStart": 157, "lineEnd": 160, "state": "unknown", "dependsOn": [{"name": "mulShift", "informal": "The lemma directly invokes the definition of `mulShift` and verifies that when the shifting element is the identity 1, left-multiplication by 1 fixes every group element, so the pulled-back configuration coincides with the original."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "mulShift_mul": {"name": "mulShift_mul", "naturalName": "Composition of Translation Shifts", "kind": "lemma", "signature": "@[to_additive] lemma mulShift_mul (g\u2081 g\u2082 : G) (x : G \u2192 A) :\n    mulShift (g\u2081 * g\u2082) x = mulShift g\u2082 (mulShift g\u2081 x)", "descriptionHtml": "<p>This lemma states that shifting a function $x : G \\to A$ by the product $g_1 g_2$ equals first shifting by $g_1$ and then shifting the result by $g_2$. In other words, the map $g \\mapsto \\text{mulShift}_g$ is a right action (or antihomomorphism) of $G$ on functions $G \\to A$, since left-translation by $g_1 g_2$ decomposes as left-translation by $g_1$ followed by left-translation by $g_2$. The <code>to_additive<\/code> attribute provides the analogous statement for additive groups.<\/p>", "exampleHtml": "", "lineStart": 161, "lineEnd": 167, "state": "unknown", "dependsOn": [{"name": "mulShift", "informal": "The lemma directly uses the `mulShift` operation to express a compatibility law: it asserts that applying `mulShift` twice in succession (first by $g_1$, then by $g_2$) equals a single `mulShift` by the product $g_1 g_2$, confirming that `mulShift` defines a group action."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "continuous_mulShift": {"name": "continuous_mulShift", "naturalName": "Continuity of Left-Translation Shift", "kind": "lemma", "signature": "@[to_additive (attr", "descriptionHtml": "<p>This lemma states that for a fixed group element <code>a<\/code>, the map sending <code>f<\/code> (a function from a topological group <code>G<\/code> to a topological space <code>\u03b1<\/code>) to its left-translate <code>x \u21a6 f(a * x)<\/code> is continuous as a map on the function space <code>C(G, \u03b1)<\/code> equipped with the compact-open topology. The proof follows from general continuity properties of composition, since left-multiplication by <code>a<\/code> is itself a continuous map on <code>G<\/code>.<\/p>", "exampleHtml": "", "lineStart": 168, "lineEnd": 194, "state": "unknown", "dependsOn": [{"name": "mulShift", "informal": "The continuity lemma (A) establishes that the map `f \u21a6 mulShift g f` on the function space `C(G, \u03b1)` is continuous, so B provides the precise operation whose continuity is being asserted in A."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "cylinder": {"name": "cylinder", "naturalName": "Cylinder Set in Product Space", "kind": "def", "signature": "def cylinder (U : Finset G) (x : G \u2192 A) : Set (G \u2192 A)", "descriptionHtml": "<p>A cylinder set is a basic open set in the product topology on <code>G \u2192 A<\/code>, defined as the collection of all configurations (functions from <code>G<\/code> to <code>A<\/code>) that agree with a fixed reference configuration <code>x<\/code> on a specified finite set <code>U \u2286 G<\/code>, while being unconstrained outside <code>U<\/code>. Formally, it is <code>{y : G \u2192 A | \u2200 g \u2208 U, y g = x g}<\/code>. When <code>A<\/code> carries the discrete topology, these sets form a basis of clopen sets for the product topology on <code>G \u2192 A<\/code>, making them fundamental in symbolic dynamics and the study of shift spaces.<\/p>", "exampleHtml": "", "lineStart": 195, "lineEnd": 200, "state": "unknown", "dependsOn": [], "usedByInFile": [{"name": "cylinder_eq_set_pi", "informal": "Lemma A provides an explicit characterization of the cylinder set defined in B, showing that it coincides with the dependent product fixing each coordinate in `U` to the prescribed value `x(i)`. In other words, A reformulates B's set-comprehension definition as a standard pi-type intersection of singletons."}, {"name": "mem_cylinder", "informal": "The lemma **mem_cylinder** provides a pointwise membership criterion for the set defined by **cylinder**: it unpacks the definition of the cylinder set to characterize exactly when a configuration $y$ belongs to $\\text{cylinder}(U, x)$, namely that $y$ and $x$ agree at every point of $U$."}, {"name": "isOpen_cylinder", "informal": "The lemma directly asserts an openness property of the sets defined by **cylinder**: it proves that each cylinder set (as defined in B) is open in the product topology when `A` has the discrete topology, since it is a finite intersection of preimages of open singletons."}, {"name": "isClosed_cylinder", "informal": "The lemma directly applies to the sets defined by B: it proves that every cylinder set \u2014 i.e., every set of configurations agreeing with a fixed pattern on a finite coordinate set \u2014 is closed in the product topology when $A$ is T1, by expressing the cylinder as a finite intersection of closed preimages of singletons."}, {"name": "mulOccursInAt_eq_cylinder", "informal": "The lemma characterizes occurrence sets directly in terms of cylinder sets: it shows that the set of configurations where pattern `p` occurs at position `g` is precisely the cylinder defined by the translated support and translated pattern. Thus the cylinder set construction is the exact object that the lemma identifies the occurrence set with."}], "usesExternal": [], "usedExternally": [], "similar": []}, "cylinder_eq_set_pi": {"name": "cylinder_eq_set_pi", "naturalName": "Cylinder Set as Dependent Product of Singletons", "kind": "lemma", "signature": "lemma cylinder_eq_set_pi (U : Finset G) (x : G \u2192 A) :\n    cylinder U x = Set.pi (\u2191U : Set G) (fun i => ({x i} : Set A))", "descriptionHtml": "<p>This lemma states that a cylinder set defined by a finite set of coordinates <code>U<\/code> and a point <code>x : G \u2192 A<\/code> equals the dependent product <code>Set.pi U (fun i =&gt; {x i})<\/code> \u2014 that is, the set of all functions <code>G \u2192 A<\/code> that agree with <code>x<\/code> on every coordinate in <code>U<\/code>. It confirms that the cylinder set construction is equivalent to fixing finitely many coordinates to prescribed values while leaving all others free.<\/p>", "exampleHtml": "", "lineStart": 201, "lineEnd": 204, "state": "unknown", "dependsOn": [{"name": "cylinder", "informal": "Lemma A provides an explicit characterization of the cylinder set defined in B, showing that it coincides with the dependent product fixing each coordinate in `U` to the prescribed value `x(i)`. In other words, A reformulates B's set-comprehension definition as a standard pi-type intersection of singletons."}], "usedByInFile": [{"name": "isOpen_cylinder", "informal": "To prove that every cylinder set is open, one rewrites it using B as a finite product of singletons `Set.pi U (fun i => {x i})`, then recognizes this as a basic open set in the product topology (a finite intersection of preimages of discrete-open singletons)."}, {"name": "isClosed_cylinder", "informal": "The proof that cylinder sets are closed relies on first recognizing, via B, that a cylinder set is precisely a restricted product of singletons `{x(i)}` over the finite index set `U`. This representation reduces the closedness claim to the fact that a finite intersection of closed preimages of singletons (closed in a T1 space) is closed."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mem_cylinder": {"name": "mem_cylinder", "naturalName": "Membership Condition for Cylinders", "kind": "lemma", "signature": "lemma mem_cylinder {U : Finset G} {x y : G \u2192 A} :\n    y \u2208 cylinder U x \u2194 \u2200 i \u2208 U, y i = x i", "descriptionHtml": "<p>A lemma characterizing when a function belongs to a cylinder set. Specifically, a function $y : G \\to A$ lies in the cylinder $\\text{cylinder}(U, x)$ \u2014 the set of functions agreeing with $x$ on the finite set $U$ \u2014 if and only if $y(i) = x(i)$ for every $i \\in U$.<\/p>", "exampleHtml": "", "lineStart": 205, "lineEnd": 210, "state": "unknown", "dependsOn": [{"name": "cylinder", "informal": "The lemma **mem_cylinder** provides a pointwise membership criterion for the set defined by **cylinder**: it unpacks the definition of the cylinder set to characterize exactly when a configuration $y$ belongs to $\\text{cylinder}(U, x)$, namely that $y$ and $x$ agree at every point of $U$."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "isOpen_cylinder": {"name": "isOpen_cylinder", "naturalName": "Cylinders Open in Discrete Topology", "kind": "lemma", "signature": "lemma isOpen_cylinder [DiscreteTopology A] (U : Finset G) (x : G \u2192 A) :\n    IsOpen (cylinder U x)", "descriptionHtml": "<p>When the type <code>A<\/code> carries the discrete topology, every cylinder set is open. Here a cylinder set <code>cylinder U x<\/code> consists of all functions <code>G \u2192 A<\/code> that agree with <code>x<\/code> on the finite set <code>U<\/code>, which is a basic open set in the product topology (a finite intersection of preimages of open singletons).<\/p>", "exampleHtml": "", "lineStart": 211, "lineEnd": 215, "state": "unknown", "dependsOn": [{"name": "cylinder", "informal": "The lemma directly asserts an openness property of the sets defined by **cylinder**: it proves that each cylinder set (as defined in B) is open in the product topology when `A` has the discrete topology, since it is a finite intersection of preimages of open singletons."}, {"name": "cylinder_eq_set_pi", "informal": "To prove that every cylinder set is open, one rewrites it using B as a finite product of singletons `Set.pi U (fun i => {x i})`, then recognizes this as a basic open set in the product topology (a finite intersection of preimages of discrete-open singletons)."}], "usedByInFile": [{"name": "isOpen_mulOccursInAt", "informal": "The openness of the pattern-occurrence set in A is deduced directly from B: the set of configurations where `p` occurs at `g` is precisely a cylinder set (configurations agreeing with a translate of `p` on a finite support), and B guarantees that such cylinder sets are open when `A` carries the discrete topology."}], "usesExternal": [], "usedExternally": [], "similar": []}, "isClosed_cylinder": {"name": "isClosed_cylinder", "naturalName": "Cylinders Are Closed in T1 Spaces", "kind": "lemma", "signature": "lemma isClosed_cylinder [T1Space A] (U : Finset G) (x : G \u2192 A) :\n    IsClosed (cylinder U x)", "descriptionHtml": "<p>This lemma states that in a product space of the form $A^G$, any cylinder set is closed, provided $A$ is a T1 space. A cylinder set <code>cylinder U x<\/code> is determined by a finite set $U \\subseteq G$ and a \"pattern\" $x : G \\to A$, consisting of all functions $G \\to A$ that agree with $x$ on every element of $U$. Since $A$ is T1 (singleton sets are closed), each coordinate restriction is a closed condition, and the finite intersection of such conditions yields a closed set.<\/p>", "exampleHtml": "", "lineStart": 216, "lineEnd": 229, "state": "unknown", "dependsOn": [{"name": "cylinder", "informal": "The lemma directly applies to the sets defined by B: it proves that every cylinder set \u2014 i.e., every set of configurations agreeing with a fixed pattern on a finite coordinate set \u2014 is closed in the product topology when $A$ is T1, by expressing the cylinder as a finite intersection of closed preimages of singletons."}, {"name": "cylinder_eq_set_pi", "informal": "The proof that cylinder sets are closed relies on first recognizing, via B, that a cylinder set is precisely a restricted product of singletons `{x(i)}` over the finite index set `U`. This representation reduces the closedness claim to the fact that a finite intersection of closed preimages of singletons (closed in a T1 space) is closed."}], "usedByInFile": [{"name": "isClosed_mulOccursInAt", "informal": "The closedness of the set where a multiplicative occurrence of pattern `p` at group element `g` occurs is established by recognizing that this set is itself a cylinder set (or a union/intersection of cylinder sets), so the result follows directly by applying the closedness of cylinder sets in the T1 product space."}], "usesExternal": [], "usedExternally": [], "similar": []}, "Subshift": {"name": "Subshift", "naturalName": "Closed Shift-Invariant Configuration Set", "kind": "structure", "signature": "structure Subshift (A : Type*) [TopologicalSpace A] (G : Type*) [AddMonoid G]", "descriptionHtml": "<p>A <strong>subshift<\/strong> on alphabet <code>A<\/code> over an additive monoid <code>G<\/code> is a structure packaging a subset of the full configuration space <code>G \u2192 A<\/code> together with two properties: the subset is topologically closed (in the product topology on <code>A^G<\/code>), and it is invariant under all shift maps, meaning translating any allowed configuration by any group element <code>g<\/code> yields another allowed configuration. This generalizes the classical notion of a subshift from symbolic dynamics, where typically <code>G = \u2124<\/code> or <code>G = \u2124^d<\/code> and <code>A<\/code> is a finite alphabet.<\/p>", "exampleHtml": "", "lineStart": 230, "lineEnd": 249, "state": "unknown", "dependsOn": [], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "MulSubshift": {"name": "MulSubshift", "naturalName": "Multiplicative Subshift Structure", "kind": "structure", "signature": "structure MulSubshift", "descriptionHtml": "<p>A structure packaging together a multiplicative subshift, which consists of a type <code>\u03b1<\/code> of symbols, a type <code>\u03b9<\/code> of coordinates, and a set <code>S<\/code> of functions <code>\u03b9 \u2192 \u03b1<\/code> (configurations) that is closed under the shift action and satisfies some topological or combinatorial constraints. This bundles the ambient alphabet, index set, and the invariant subset of the full shift space into a single mathematical object.<\/p>", "exampleHtml": "", "lineStart": 250, "lineEnd": 268, "state": "unknown", "dependsOn": [{"name": "mulShift", "informal": "The structure `MulSubshift` uses `mulShift` to specify the invariance condition: the set `S` of configurations must be closed under the left-multiplication shift action defined by `mulShift`, meaning that shifting any configuration in `S` by any group element again yields a configuration in `S`."}], "usedByInFile": [{"name": "mulFullShift", "informal": "The full shift `mulFullShift` is constructed as a specific instance of the `MulSubshift` structure, providing the universal example where the carrier set is the entire configuration space with no forbidden patterns \u2014 it is the largest element in the class of subshifts that `MulSubshift` axiomatizes."}, {"name": "MulSubshift.ofForbidden", "informal": "`ofForbidden` is a specific construction method for producing an instance of `MulSubshift`: given a family of forbidden patterns, it verifies that the resulting set of pattern-avoiding configurations satisfies exactly the closure and shift-invariance conditions required by the `MulSubshift` structure."}, {"name": "MulSubshift.languageOn", "informal": "The language function A is defined relative to a specific subshift B, extracting from B's set of configurations all local patterns that appear over the finite shape U. Thus B provides the global dynamical object from which A derives its local combinatorial data."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mulFullShift": {"name": "mulFullShift", "naturalName": "Full Shift Subshift Instance", "kind": "def", "signature": "def mulFullShift (A G) [TopologicalSpace A] [Monoid G] : MulSubshift A G where\n  carrier", "descriptionHtml": "<p>This definition constructs the <strong>full shift<\/strong> as an instance of <code>MulSubshift A G<\/code>: the subshift over alphabet <code>A<\/code> and index monoid <code>G<\/code> whose carrier set consists of <em>all<\/em> configurations <code>G \u2192 A<\/code>, with no restrictions. It is the largest possible subshift, serving as the ambient space in which all other subshifts on <code>A<\/code> over <code>G<\/code> live.<\/p>", "exampleHtml": "", "lineStart": 269, "lineEnd": 285, "state": "unknown", "dependsOn": [{"name": "MulSubshift", "informal": "The full shift `mulFullShift` is constructed as a specific instance of the `MulSubshift` structure, providing the universal example where the carrier set is the entire configuration space with no forbidden patterns \u2014 it is the largest element in the class of subshifts that `MulSubshift` axiomatizes."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "Pattern": {"name": "Pattern", "naturalName": "Finite Configuration Pattern in Full Shift", "kind": "structure", "signature": "structure Pattern (A : Type*) (G : Type*) [Inhabited A]", "descriptionHtml": "<p>A structure representing a finite pattern in the full shift $A^G$, where $A$ is the alphabet and $G$ is the index group or set. It packages together a full configuration <code>config : G \u2192 A<\/code>, a finite subset <code>support : Finset G<\/code>, and a proof that <code>config<\/code> takes the default value of $A$ at every coordinate outside <code>support<\/code>. This encodes a \"partial configuration\" that specifies finitely many values and is default elsewhere \u2014 equivalently, it represents the cylinder set of all configurations in $A^G$ that agree with <code>config<\/code> on <code>support<\/code>. Patterns in this sense are the fundamental building blocks for defining subshifts by listing forbidden patterns.<\/p>", "exampleHtml": "", "lineStart": 286, "lineEnd": 317, "state": "unknown", "dependsOn": [], "usedByInFile": [{"name": "Pattern.mulOccursInAt", "informal": "The predicate `mulOccursInAt` is defined directly on instances of the `Pattern` structure, using its `support` and `config` fields to express that a configuration `x` agrees with the pattern's prescribed values on the translate of its support by `g`."}, {"name": "mulForbidden", "informal": "The forbidden family `F` in `mulForbidden` is a collection of **Pattern** objects, and a configuration avoids `F` precisely when no translate of any such pattern's finite specification agrees with the configuration on that pattern's support. Thus **Pattern** is the atomic unit of local constraint that `mulForbidden` assembles into a globally defined subshift."}, {"name": "Pattern.mulShift", "informal": "`mulShift` takes a `Pattern` as input and produces a translated version of it: specifically, it uses the pattern's `config` and `support` fields to place the finite configuration at a new basepoint `v`, constructing a full configuration in `A^G` by reading values from the pattern where defined and returning the default elsewhere."}, {"name": "fromConfig", "informal": "`fromConfig` produces an element of type `Pattern A G`, so the `Pattern` structure is precisely the output type of the construction: `fromConfig` packages a given global configuration restricted to a finite window into the structured record that `Pattern` defines, with the support and default-value conditions automatically satisfied by construction."}, {"name": "mulShift_apply_mul_left_of_mem", "informal": "The lemma directly operates on instances of the `Pattern` structure, using its `config` and `support` fields: it asserts that the shift operation on a `Pattern` by a group element `v` correctly retrieves the original `config` value at any `support` site after left-translation."}, {"name": "mulOccursInAt_mulShift", "informal": "The lemma directly uses the `Pattern` structure as the object `p` whose occurrences are being tracked \u2014 that is, `p` is a finite pattern (in the sense of `Pattern`) and the lemma describes how shifting the ambient configuration interacts with the occurrence relation for such patterns."}, {"name": "mapsTo_mulShift_mulForbidden", "informal": "The lemma refers directly to families of patterns (in the sense of `Pattern`) as the forbidden data defining the subshift, and the invariance statement is precisely that the shift action preserves the set of configurations that avoid every such finite pattern. Thus `Pattern` provides the concrete combinatorial object whose avoidance is preserved by the shift."}, {"name": "mulOccursInAt_eq_cylinder", "informal": "The lemma directly uses the `Pattern` structure \u2014 specifically its `support` and `config` fields, along with the translated pattern `p.mulShift g` \u2014 to characterize occurrence sets as cylinder sets. The `Pattern` structure is precisely the data needed to define the cylinder that the lemma identifies with the occurrence set."}, {"name": "isOpen_mulOccursInAt", "informal": "The lemma takes a `Pattern` as input and studies when it \"occurs\" in a configuration via group multiplication; the finite support and specified values packaged in the `Pattern` structure are precisely what define the cylinder condition whose openness the lemma establishes."}, {"name": "isClosed_mulForbidden", "informal": "The lemma operates on families `F` of `Pattern` objects, where each `Pattern` defines a cylinder set (configurations agreeing with a finite partial configuration on its support). The closedness of `mulForbidden F` follows by intersecting the closed complements of the open cylinder sets determined by each pattern in `F`."}, {"name": "isClosed_mulOccursInAt", "informal": "The lemma uses the `Pattern` structure directly: the set in question consists of all configurations in $A^G$ that agree with the pattern `p` (on its finite support) after translating by `g`, so the `Pattern` structure is precisely the object whose multiplicative occurrence defines the set whose closedness is being proved."}, {"name": "MulSubshift.ofForbidden", "informal": "The constructor `ofForbidden` takes a family `F` of `Pattern` objects as its input, and defines the subshift by excluding precisely those configurations that agree with some pattern in `F` on its finite support. Thus `Pattern` serves as the combinatorial data specifying what is forbidden."}, {"name": "finite_setOf_pattern_support_eq", "informal": "The lemma reasons about collections of `Pattern` objects whose support field equals a given finite set `U`, showing that only finitely many such patterns exist. The `Pattern` structure is the central object being counted: its finiteness follows because fixing the support to `U` constrains each pattern to a function from `U` into finitely many nondefault alphabet values."}, {"name": "LanguageOn", "informal": "The language construction uses `Pattern` as the type of its output elements: each finite \"snapshot\" of a configuration restricted to a shape `U` is represented as a `Pattern`, so `LanguageOn` returns a set of `Pattern`s encoding all admissible local configurations of `X` over `U`."}, {"name": "MulSubshift.languageOn", "informal": "The language `languageOn` consists of restrictions of configurations to a finite shape `U`, and each such restriction naturally corresponds to a `Pattern` \u2014 specifically, a finite partial configuration supported on `U`. Thus `Pattern` provides the precise data type that elements of the language live in, packaging the local configuration together with its finite support."}], "usesExternal": [], "usedExternally": [], "similar": []}, "Pattern.mulOccursInAt": {"name": "Pattern.mulOccursInAt", "naturalName": "Pattern occurrence at group element", "kind": "def", "signature": "def Pattern.mulOccursInAt (p : Pattern A G) (x : G \u2192 A) (g : G) : Prop", "descriptionHtml": "<p>This is a predicate stating that a finite pattern <code>p<\/code> occurs in a configuration <code>x : G \u2192 A<\/code> at position <code>g : G<\/code>. Formally, for every element <code>h<\/code> in the support of <code>p<\/code>, the value of <code>x<\/code> at the translated position <code>g + h<\/code> equals the value prescribed by the pattern's configuration at <code>h<\/code>. This is the fundamental building block for defining subshifts: a subshift can be characterized as the set of configurations in which no element of a collection of forbidden patterns occurs at any position.<\/p>", "exampleHtml": "", "lineStart": 318, "lineEnd": 337, "state": "unknown", "dependsOn": [{"name": "Pattern", "informal": "The predicate `mulOccursInAt` is defined directly on instances of the `Pattern` structure, using its `support` and `config` fields to express that a configuration `x` agrees with the pattern's prescribed values on the translate of its support by `g`."}], "usedByInFile": [{"name": "mulOccursInAt_mulShift", "informal": "Lemma A directly uses predicate B on both sides of its equivalence: it asserts that B holds for pattern `p` in the shifted configuration `mulShift g x` at position `h` if and only if B holds for `p` in the original configuration `x` at position `g * h`, thereby describing how B transforms under the group action."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mulForbidden": {"name": "mulForbidden", "naturalName": "Shift Space Defined by Forbidden Patterns", "kind": "def", "signature": "def mulForbidden (F : Set (Pattern A G)) : Set (G \u2192 A)", "descriptionHtml": "<p>This definition constructs the set of configurations (functions <code>G \u2192 A<\/code>) that avoid every pattern in a given forbidden family <code>F<\/code>. Formally, a configuration <code>x : G \u2192 A<\/code> belongs to <code>mulForbidden F<\/code> if and only if no pattern <code>p \u2208 F<\/code> occurs in <code>x<\/code> at any position <code>g : G<\/code> (where <code>G<\/code> is a monoid acting as the index group/monoid and <code>A<\/code> is the alphabet). This is the standard construction of a subshift: given a collection of forbidden patterns, <code>mulForbidden F<\/code> is the corresponding shift-invariant closed subspace of <code>A^G<\/code>.<\/p>", "exampleHtml": "", "lineStart": 338, "lineEnd": 372, "state": "unknown", "dependsOn": [{"name": "Pattern", "informal": "The forbidden family `F` in `mulForbidden` is a collection of **Pattern** objects, and a configuration avoids `F` precisely when no translate of any such pattern's finite specification agrees with the configuration on that pattern's support. Thus **Pattern** is the atomic unit of local constraint that `mulForbidden` assembles into a globally defined subshift."}], "usedByInFile": [{"name": "mapsTo_mulShift_mulForbidden", "informal": "The lemma directly concerns the set defined by `mulForbidden`: it proves that this forbidden-pattern-avoiding set is closed under the shift action, i.e., that each multiplicative shift is a self-map of `mulForbidden F`, establishing the shift-invariance that is the defining property of a subshift."}, {"name": "isClosed_mulForbidden", "informal": "The lemma directly concerns the set constructed by `mulForbidden`, proving that it is topologically closed in the product space $A^G$. Specifically, it establishes a key structural property of the forbidden-pattern subshift defined by `mulForbidden`: membership is determined by an intersection of closed conditions, making the resulting set closed."}, {"name": "MulSubshift.ofForbidden", "informal": "The constructor `ofForbidden` uses `mulForbidden F` directly as the underlying carrier set of the subshift it builds, relying on the fact that `mulForbidden F` is already established to be closed and shift-invariant."}], "usesExternal": [], "usedExternally": [], "similar": []}, "Pattern.mulShift": {"name": "Pattern.mulShift", "naturalName": "Pattern Translation by Group Element", "kind": "def", "signature": "protected noncomputable def Pattern.mulShift (p : Pattern A G) (v : G) : G \u2192 A", "descriptionHtml": "<p>This is a noncomputable function that translates a finite pattern <code>p<\/code> (supported on some finite subset of a group <code>G<\/code>) so that it appears starting at the element <code>v \u2208 G<\/code>, embedding the result into a full configuration <code>G \u2192 A<\/code>. Given an input <code>h : G<\/code>, it checks whether <code>h<\/code> lies in the left-translate of the pattern's support (i.e., whether <code>h = v + w<\/code> for some <code>w<\/code> in the support); if so, it noncomputably chooses such a preimage <code>w<\/code> and returns the pattern's value <code>p.config w<\/code>, and otherwise returns the default value. Because no left-cancellation is assumed, the chosen preimage need not be unique, so correctness equations like <code>mulShift p v (v + w) = p.config w<\/code> require a separate cancellation hypothesis.<\/p>", "exampleHtml": "", "lineStart": 373, "lineEnd": 390, "state": "unknown", "dependsOn": [{"name": "mulShift", "informal": "`Pattern.mulShift` uses `mulShift` to embed the finite pattern into the full configuration: after choosing the preimage `w` of `h` under left-translation by `v`, it applies the pullback-by-multiplication shift to recover the pattern's value at the correct group position."}, {"name": "Pattern", "informal": "`mulShift` takes a `Pattern` as input and produces a translated version of it: specifically, it uses the pattern's `config` and `support` fields to place the finite configuration at a new basepoint `v`, constructing a full configuration in `A^G` by reading values from the pattern where defined and returning the default elsewhere."}], "usedByInFile": [{"name": "mulShift_apply_mul_left_of_mem", "informal": "Lemma A establishes a key correctness property of the translation operation defined in B: when the group satisfies left-cancellation, the preimage chosen noncomputably in B's definition is forced to equal `w`, so the shifted pattern B returns the correct configuration value at the translated point `v * w`."}], "usesExternal": [], "usedExternally": [], "similar": []}, "fromConfig": {"name": "fromConfig", "naturalName": "Pattern from Configuration Restriction", "kind": "def", "signature": "noncomputable def fromConfig (x : G \u2192 A) (U : Finset G) : Pattern A G", "descriptionHtml": "<p>This definition constructs a <code>Pattern A G<\/code> by restricting a full configuration <code>x : G \u2192 A<\/code> to a finite subset <code>U<\/code> of the group <code>G<\/code>. The resulting pattern agrees with <code>x<\/code> on elements of <code>U<\/code>, takes the default value outside <code>U<\/code>, and has support exactly <code>U<\/code> \u2014 capturing the \"local snapshot\" of <code>x<\/code> visible within the window <code>U<\/code>.<\/p>", "exampleHtml": "", "lineStart": 391, "lineEnd": 411, "state": "unknown", "dependsOn": [{"name": "Pattern", "informal": "`fromConfig` produces an element of type `Pattern A G`, so the `Pattern` structure is precisely the output type of the construction: `fromConfig` packages a given global configuration restricted to a finite window into the structured record that `Pattern` defines, with the support and default-value conditions automatically satisfied by construction."}], "usedByInFile": [{"name": "LanguageOn", "informal": "`LanguageOn` is defined as the set of all patterns obtained by applying `fromConfig` to configurations `x \u2208 X` over the window `U`; that is, `fromConfig` is precisely the operation used to extract each finite local snapshot, so `LanguageOn` is the image of `X` under this restriction map."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mulShift_apply_mul_left_of_mem": {"name": "mulShift_apply_mul_left_of_mem", "naturalName": "Translated Pattern Agrees at Shifted Support Points", "kind": "lemma", "signature": "lemma mulShift_apply_mul_left_of_mem\n    (p : Pattern A G) (v w : G) (hw : w \u2208 p.support) :\n    p.mulShift v (v * w) = p.config w", "descriptionHtml": "<p>This lemma states that if <code>w<\/code> is in the support of a pattern <code>p<\/code>, then the shifted pattern <code>p.mulShift v<\/code> evaluated at the translated point <code>v * w<\/code> equals the original configuration value <code>p.config w<\/code>. In other words, the left-translate of <code>p<\/code> by <code>v<\/code> recovers the same \"color\" or \"configuration value\" at the translated site <code>v * w<\/code> as the original pattern had at <code>w<\/code>. The proof relies on the left-cancellation property of the group <code>G<\/code> to uniquely identify <code>w<\/code> as the preimage of <code>v * w<\/code> under left-multiplication by <code>v<\/code>.<\/p>", "exampleHtml": "", "lineStart": 412, "lineEnd": 440, "state": "unknown", "dependsOn": [{"name": "mulShift", "informal": "The lemma directly concerns the function defined in B: it characterizes how the left-multiplication shift `mulShift v p` behaves at translated points, showing that evaluating the shifted pattern at `v * w` recovers the original value at `w`, which follows immediately from B's pullback definition."}, {"name": "Pattern", "informal": "The lemma directly operates on instances of the `Pattern` structure, using its `config` and `support` fields: it asserts that the shift operation on a `Pattern` by a group element `v` correctly retrieves the original `config` value at any `support` site after left-translation."}, {"name": "Pattern.mulShift", "informal": "Lemma A establishes a key correctness property of the translation operation defined in B: when the group satisfies left-cancellation, the preimage chosen noncomputably in B's definition is forced to equal `w`, so the shifted pattern B returns the correct configuration value at the translated point `v * w`."}], "usedByInFile": [{"name": "mulOccursInAt_eq_cylinder", "informal": "To verify that a configuration lies in the occurrence cylinder, one must confirm that the shifted pattern agrees with the configuration at each translated site; lemma B provides precisely this value-recovery fact \u2014 that `(p.mulShift g)(g\u00b7w) = p(w)` \u2014 which lemma A invokes to establish the pointwise agreement characterizing the cylinder set."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mulOccursInAt_mulShift": {"name": "mulOccursInAt_mulShift", "naturalName": "Pattern Occurrence Under Configuration Shift", "kind": "lemma", "signature": "lemma mulOccursInAt_mulShift {A G : Type*} [Inhabited A] [Monoid G]\n    (p : Pattern A G) (x : G \u2192 A) (g h : G) :\n    p.mulOccursInAt (mulShift g x) h \u2194 p.mulOccursInAt x (g * h)", "descriptionHtml": "<p>This lemma states that a pattern <code>p<\/code> occurs in the <code>g<\/code>-shifted configuration <code>mulShift g x<\/code> at position <code>h<\/code> if and only if <code>p<\/code> occurs in the original configuration <code>x<\/code> at position <code>g * h<\/code>. In other words, shifting a configuration by <code>g<\/code> and then looking for an occurrence at <code>h<\/code> is the same as looking for an occurrence at <code>g * h<\/code> in the unshifted configuration, so shifting and occurrence-checking commute in this precise sense.<\/p>", "exampleHtml": "", "lineStart": 441, "lineEnd": 454, "state": "unknown", "dependsOn": [{"name": "mulShift_apply", "informal": "Lemma A uses Lemma B to unfold the definition of the shifted configuration: by applying B to evaluate `mulShift g x` pointwise as `x(g \u00b7 h)`, the occurrence condition at position `h` in the shifted configuration directly reduces to the occurrence condition at `g \u00b7 h` in the original."}, {"name": "mulShift", "informal": "The lemma directly characterizes how occurrence-checking interacts with the shift operation defined in B: it asserts that checking for pattern `p` in the shifted configuration `mulShift g x` at position `h` reduces, by unfolding the definition of `mulShift`, to checking for `p` in `x` at position `g * h`."}, {"name": "Pattern", "informal": "The lemma directly uses the `Pattern` structure as the object `p` whose occurrences are being tracked \u2014 that is, `p` is a finite pattern (in the sense of `Pattern`) and the lemma describes how shifting the ambient configuration interacts with the occurrence relation for such patterns."}, {"name": "Pattern.mulOccursInAt", "informal": "Lemma A directly uses predicate B on both sides of its equivalence: it asserts that B holds for pattern `p` in the shifted configuration `mulShift g x` at position `h` if and only if B holds for `p` in the original configuration `x` at position `g * h`, thereby describing how B transforms under the group action."}], "usedByInFile": [{"name": "mapsTo_mulShift_mulForbidden", "informal": "The invariance result in A is proved by directly applying B: to check that a shifted configuration avoids every forbidden pattern, one uses B to translate each occurrence condition back to the original configuration, reducing the claim to the assumption that the original configuration already avoids all forbidden patterns."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mapsTo_mulShift_mulForbidden": {"name": "mapsTo_mulShift_mulForbidden", "naturalName": "Forbidden Patterns Stable Under Shift", "kind": "lemma", "signature": "lemma mapsTo_mulShift_mulForbidden {A G : Type*} [Inhabited A] [Monoid G]\n    (F : Set (Pattern A G)) (h : G) :\n    Set.MapsTo (mulShift h) (mulForbidden (A", "descriptionHtml": "<p>This lemma states that the set of configurations avoiding a family <code>F<\/code> of patterns is invariant under the multiplicative shift action. Specifically, if a configuration <code>x<\/code> avoids every pattern in <code>F<\/code> at every position, then the shifted configuration <code>mulShift h \u00b7 x<\/code> also avoids every pattern in <code>F<\/code>, for any group element <code>h<\/code>. In other words, <code>mulShift h<\/code> maps the forbidden-pattern-avoiding configurations into themselves, i.e., it is a self-map of <code>mulForbidden F<\/code>.<\/p>", "exampleHtml": "", "lineStart": 455, "lineEnd": 488, "state": "unknown", "dependsOn": [{"name": "mulShift", "informal": "The lemma directly uses the shift operation defined in B as its central object of study, proving that applying a left-multiplication shift by any group element preserves the property of avoiding all forbidden patterns \u2014 that is, `mulShift g` restricts to a self-map of the subshift defined by `F`."}, {"name": "Pattern", "informal": "The lemma refers directly to families of patterns (in the sense of `Pattern`) as the forbidden data defining the subshift, and the invariance statement is precisely that the shift action preserves the set of configurations that avoid every such finite pattern. Thus `Pattern` provides the concrete combinatorial object whose avoidance is preserved by the shift."}, {"name": "mulOccursInAt_mulShift", "informal": "The invariance result in A is proved by directly applying B: to check that a shifted configuration avoids every forbidden pattern, one uses B to translate each occurrence condition back to the original configuration, reducing the claim to the assumption that the original configuration already avoids all forbidden patterns."}, {"name": "mulForbidden", "informal": "The lemma directly concerns the set defined by `mulForbidden`: it proves that this forbidden-pattern-avoiding set is closed under the shift action, i.e., that each multiplicative shift is a self-map of `mulForbidden F`, establishing the shift-invariance that is the defining property of a subshift."}], "usedByInFile": [{"name": "MulSubshift.ofForbidden", "informal": "The constructor `ofForbidden` relies on `mapsTo_mulShift_mulForbidden` to verify the shift-invariance condition required of a subshift: the lemma directly supplies the proof that the set of configurations avoiding `F` is closed under the shift action, which is one of the two key properties (alongside closedness) needed to validate the construction."}], "usesExternal": [], "usedExternally": [], "similar": []}, "mulOccursInAt_eq_cylinder": {"name": "mulOccursInAt_eq_cylinder", "naturalName": "Occurrence Set Equals Cylinder Set", "kind": "lemma", "signature": "lemma mulOccursInAt_eq_cylinder\n    (p : Pattern A G) (g : G) :\n    { x | p.mulOccursInAt x g } = cylinder (p.support.image (g * \u00b7)) (p.mulShift g)", "descriptionHtml": "<p>This lemma establishes that the set of configurations in which a pattern <code>p<\/code> occurs at position <code>g<\/code> \u2014 called the <em>occurrence set<\/em> \u2014 is exactly a cylinder set in the configuration space. Specifically, a configuration <code>x<\/code> has <code>p<\/code> occurring at position <code>g<\/code> if and only if <code>x<\/code> lies in the cylinder defined by the translated support <code>g \u00b7 (p.support)<\/code> and the translated pattern <code>p.mulShift g<\/code>. In other words, <code>p<\/code> occurs at position <code>g<\/code> in <code>x<\/code> precisely when <code>x<\/code> agrees with the <code>g<\/code>-translate of <code>p<\/code> on every site of the form <code>g * w<\/code> for <code>w<\/code> in <code>p<\/code>'s support. The proof uses left-cancellability of the group multiplication to identify the relevant preimage.<\/p>", "exampleHtml": "", "lineStart": 489, "lineEnd": 516, "state": "unknown", "dependsOn": [{"name": "cylinder", "informal": "The lemma characterizes occurrence sets directly in terms of cylinder sets: it shows that the set of configurations where pattern `p` occurs at position `g` is precisely the cylinder defined by the translated support and translated pattern. Thus the cylinder set construction is the exact object that the lemma identifies the occurrence set with."}, {"name": "mulShift", "informal": "The occurrence set lemma uses `mulShift` to express the cylinder condition: a configuration `x` contains pattern `p` at position `g` precisely when `x` agrees with `mulShift g p` on the translated support, making `mulShift` the concrete tool for encoding \"pattern translated to position `g`\" as a cylinder constraint."}, {"name": "Pattern", "informal": "The lemma directly uses the `Pattern` structure \u2014 specifically its `support` and `config` fields, along with the translated pattern `p.mulShift g` \u2014 to characterize occurrence sets as cylinder sets. The `Pattern` structure is precisely the data needed to define the cylinder that the lemma identifies with the occurrence set."}, {"name": "mulShift_apply_mul_left_of_mem", "informal": "To verify that a configuration lies in the occurrence cylinder, one must confirm that the shifted pattern agrees with the configuration at each translated site; lemma B provides precisely this value-recovery fact \u2014 that `(p.mulShift g)(g\u00b7w) = p(w)` \u2014 which lemma A invokes to establish the pointwise agreement characterizing the cylinder set."}], "usedByInFile": [{"name": "isOpen_mulOccursInAt", "informal": "Lemma A relies directly on Lemma B: by first identifying the occurrence set as a cylinder set (via B), openness follows immediately, since cylinder sets are open in the product topology when the alphabet carries the discrete topology."}, {"name": "isClosed_mulOccursInAt", "informal": "Lemma A proves the occurrence set is closed by invoking Lemma B to identify it as a cylinder set, then appealing to the fact that cylinder sets are closed in the product topology on a T1 space."}], "usesExternal": [], "usedExternally": [], "similar": []}, "isOpen_mulOccursInAt": {"name": "isOpen_mulOccursInAt", "naturalName": "Openness of Pattern Occurrence Set", "kind": "lemma", "signature": "lemma isOpen_mulOccursInAt [DiscreteTopology A] (p : Pattern A G) (g : G) :\n    IsOpen { x | p.mulOccursInAt x g }", "descriptionHtml": "<p>This lemma states that for a pattern <code>p<\/code> in a group <code>G<\/code> with alphabet <code>A<\/code> carrying the discrete topology, the set of configurations in which <code>p<\/code> occurs (via group multiplication) at a fixed group element <code>g<\/code> is an open subset of the configuration space. The discrete topology on <code>A<\/code> is the key hypothesis, as it ensures that the cylinder-like condition defining pattern occurrence \u2014 which depends only on finitely many coordinates \u2014 is open in the product topology.<\/p>", "exampleHtml": "", "lineStart": 517, "lineEnd": 531, "state": "unknown", "dependsOn": [{"name": "isOpen_cylinder", "informal": "The openness of the pattern-occurrence set in A is deduced directly from B: the set of configurations where `p` occurs at `g` is precisely a cylinder set (configurations agreeing with a translate of `p` on a finite support), and B guarantees that such cylinder sets are open when `A` carries the discrete topology."}, {"name": "Pattern", "informal": "The lemma takes a `Pattern` as input and studies when it \"occurs\" in a configuration via group multiplication; the finite support and specified values packaged in the `Pattern` structure are precisely what define the cylinder condition whose openness the lemma establishes."}, {"name": "mulOccursInAt_eq_cylinder", "informal": "Lemma A relies directly on Lemma B: by first identifying the occurrence set as a cylinder set (via B), openness follows immediately, since cylinder sets are open in the product topology when the alphabet carries the discrete topology."}], "usedByInFile": [{"name": "isClosed_mulForbidden", "informal": "The closedness of `mulForbidden F` is derived by taking complements and intersections: each set of configurations where a pattern *does* occur at some location is open by B, so its complement is closed, and `mulForbidden F` \u2014 being an intersection of such complements \u2014 is closed as well."}], "usesExternal": [], "usedExternally": [], "similar": []}, "isClosed_mulForbidden": {"name": "isClosed_mulForbidden", "naturalName": "Avoiding Patterns is a Closed Condition", "kind": "lemma", "signature": "lemma isClosed_mulForbidden [DiscreteTopology A] (F : Set (Pattern A G)) :\n    IsClosed (mulForbidden F)", "descriptionHtml": "<p>This lemma states that when <code>A<\/code> carries the discrete topology, the set <code>mulForbidden F<\/code> of colorings <code>G \u2192 A<\/code> that avoid every pattern in the family <code>F<\/code> is a closed subset of the product topology on <code>G \u2192 A<\/code>. The proof strategy is visible in the docstring: each occurrence set (colorings where a specific pattern appears at a specific location) is open since <code>A<\/code> is discrete, so its complement is closed, and <code>mulForbidden F<\/code> is an intersection of such closed sets over all patterns in <code>F<\/code> and all locations in <code>G<\/code>.<\/p>", "exampleHtml": "", "lineStart": 532, "lineEnd": 548, "state": "unknown", "dependsOn": [{"name": "isOpen_mulOccursInAt", "informal": "The closedness of `mulForbidden F` is derived by taking complements and intersections: each set of configurations where a pattern *does* occur at some location is open by B, so its complement is closed, and `mulForbidden F` \u2014 being an intersection of such complements \u2014 is closed as well."}, {"name": "Pattern", "informal": "The lemma operates on families `F` of `Pattern` objects, where each `Pattern` defines a cylinder set (configurations agreeing with a finite partial configuration on its support). The closedness of `mulForbidden F` follows by intersecting the closed complements of the open cylinder sets determined by each pattern in `F`."}, {"name": "mulForbidden", "informal": "The lemma directly concerns the set constructed by `mulForbidden`, proving that it is topologically closed in the product space $A^G$. Specifically, it establishes a key structural property of the forbidden-pattern subshift defined by `mulForbidden`: membership is determined by an intersection of closed conditions, making the resulting set closed."}], "usedByInFile": [{"name": "MulSubshift.ofForbidden", "informal": "The constructor `ofForbidden` invokes `isClosed_mulForbidden` directly to verify that the carrier set of the resulting subshift is closed, which is one of the two required conditions (alongside shift-invariance) for the structure to be a valid subshift."}], "usesExternal": [], "usedExternally": [], "similar": []}, "isClosed_mulOccursInAt": {"name": "isClosed_mulOccursInAt", "naturalName": "Closed Set of Occurrences", "kind": "lemma", "signature": "lemma isClosed_mulOccursInAt [T1Space A] (p : Pattern A G) (g : G) :\n    IsClosed { x | p.mulOccursInAt x g }", "descriptionHtml": "<p>This lemma states that for a pattern <code>p<\/code> and group element <code>g<\/code>, the set of points <code>x<\/code> (in the space <code>A<\/code>) where the pattern <code>p<\/code> has a multiplicative occurrence at position <code>g<\/code> is a closed set, provided the space <code>A<\/code> is a T1 topological space.<\/p>", "exampleHtml": "", "lineStart": 549, "lineEnd": 572, "state": "unknown", "dependsOn": [{"name": "Pattern", "informal": "The lemma uses the `Pattern` structure directly: the set in question consists of all configurations in $A^G$ that agree with the pattern `p` (on its finite support) after translating by `g`, so the `Pattern` structure is precisely the object whose multiplicative occurrence defines the set whose closedness is being proved."}, {"name": "isClosed_cylinder", "informal": "The closedness of the set where a multiplicative occurrence of pattern `p` at group element `g` occurs is established by recognizing that this set is itself a cylinder set (or a union/intersection of cylinder sets), so the result follows directly by applying the closedness of cylinder sets in the T1 product space."}, {"name": "mulOccursInAt_eq_cylinder", "informal": "Lemma A proves the occurrence set is closed by invoking Lemma B to identify it as a cylinder set, then appealing to the fact that cylinder sets are closed in the product topology on a T1 space."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "MulSubshift.ofForbidden": {"name": "MulSubshift.ofForbidden", "naturalName": "Subshift from Forbidden Patterns", "kind": "def", "signature": "def MulSubshift.ofForbidden [DiscreteTopology A] (F : Set (Pattern A G)) : MulSubshift A G where\n  carrier", "descriptionHtml": "<p>This is a constructor that builds a multiplicative subshift on the configuration space <code>G \u2192 A<\/code> from a family of forbidden patterns <code>F<\/code>. The resulting subshift consists of precisely those configurations <code>x : G \u2192 A<\/code> in which no pattern from <code>F<\/code> appears at any position. The carrier set is closed (since each set of configurations containing a given pattern is open, their union is open, and its complement is closed) and shift-invariant (since shifting a configuration that avoids <code>F<\/code> still avoids <code>F<\/code>), making this a valid subshift.<\/p>", "exampleHtml": "", "lineStart": 573, "lineEnd": 585, "state": "unknown", "dependsOn": [{"name": "mulForbidden", "informal": "The constructor `ofForbidden` uses `mulForbidden F` directly as the underlying carrier set of the subshift it builds, relying on the fact that `mulForbidden F` is already established to be closed and shift-invariant."}, {"name": "Pattern", "informal": "The constructor `ofForbidden` takes a family `F` of `Pattern` objects as its input, and defines the subshift by excluding precisely those configurations that agree with some pattern in `F` on its finite support. Thus `Pattern` serves as the combinatorial data specifying what is forbidden."}, {"name": "isClosed_mulForbidden", "informal": "The constructor `ofForbidden` invokes `isClosed_mulForbidden` directly to verify that the carrier set of the resulting subshift is closed, which is one of the two required conditions (alongside shift-invariance) for the structure to be a valid subshift."}, {"name": "MulSubshift", "informal": "`ofForbidden` is a specific construction method for producing an instance of `MulSubshift`: given a family of forbidden patterns, it verifies that the resulting set of pattern-avoiding configurations satisfies exactly the closure and shift-invariance conditions required by the `MulSubshift` structure."}, {"name": "mapsTo_mulShift_mulForbidden", "informal": "The constructor `ofForbidden` relies on `mapsTo_mulShift_mulForbidden` to verify the shift-invariance condition required of a subshift: the lemma directly supplies the proof that the set of configurations avoiding `F` is closed under the shift action, which is one of the two key properties (alongside closedness) needed to validate the construction."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "finite_setOf_pattern_support_eq": {"name": "finite_setOf_pattern_support_eq", "naturalName": "Finiteness of patterns with given support", "kind": "lemma", "signature": "lemma finite_setOf_pattern_support_eq\n    {A G : Type*} [Finite A] [Inhabited A]\n    (U : Finset G) :\n    ({p : Pattern A G | p.support = U}).Finite", "descriptionHtml": "<p>Given a finite type <code>A<\/code> (with an inhabitant) and a finset <code>U<\/code> of group elements, the collection of all patterns over <code>A<\/code> indexed by <code>G<\/code> whose support is exactly <code>U<\/code> is a finite set. Since the support of a pattern must equal the prescribed finite set <code>U<\/code>, each such pattern is essentially a function from <code>U<\/code> to nondefault values in <code>A<\/code>, leaving only finitely many choices.<\/p>", "exampleHtml": "", "lineStart": 586, "lineEnd": 615, "state": "unknown", "dependsOn": [{"name": "Pattern", "informal": "The lemma reasons about collections of `Pattern` objects whose support field equals a given finite set `U`, showing that only finitely many such patterns exist. The `Pattern` structure is the central object being counted: its finiteness follows because fixing the support to `U` constrains each pattern to a function from `U` into finitely many nondefault alphabet values."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}, "LanguageOn": {"name": "LanguageOn", "naturalName": "Language of Configurations on Shape", "kind": "def", "signature": "def LanguageOn (X : Set (G \u2192 A)) (U : Finset G) : Set (Pattern A G)", "descriptionHtml": "<p>This is a definition that constructs the <strong>language<\/strong> of a set of configurations <code>X<\/code> (functions from a group <code>G<\/code> to an alphabet <code>A<\/code>) restricted to a finite shape <code>U<\/code>. Specifically, it returns the set of all patterns obtained by taking some configuration <code>x \u2208 X<\/code> and restricting it to the finite region <code>U \u2286 G<\/code>, capturing all finite \"snapshots\" of configurations in <code>X<\/code> over that shape.<\/p>", "exampleHtml": "", "lineStart": 616, "lineEnd": 619, "state": "unknown", "dependsOn": [{"name": "Pattern", "informal": "The language construction uses `Pattern` as the type of its output elements: each finite \"snapshot\" of a configuration restricted to a shape `U` is represented as a `Pattern`, so `LanguageOn` returns a set of `Pattern`s encoding all admissible local configurations of `X` over `U`."}, {"name": "fromConfig", "informal": "`LanguageOn` is defined as the set of all patterns obtained by applying `fromConfig` to configurations `x \u2208 X` over the window `U`; that is, `fromConfig` is precisely the operation used to extract each finite local snapshot, so `LanguageOn` is the image of `X` under this restriction map."}], "usedByInFile": [{"name": "MulSubshift.languageOn", "informal": "`MulSubshift.languageOn` is defined by applying `LanguageOn` to the underlying set of configurations of the subshift `Y`; that is, the local pattern language of the subshift over shape `U` is simply the general language construction `LanguageOn` instantiated to the subshift's configuration set."}], "usesExternal": [], "usedExternally": [], "similar": []}, "MulSubshift.languageOn": {"name": "MulSubshift.languageOn", "naturalName": "Subshift Language on Finite Shape", "kind": "def", "signature": "def MulSubshift.languageOn {A G} [TopologicalSpace A] [Inhabited A] [Monoid G]\n    (Y : MulSubshift A G) (U : Finset G) : Set (Pattern A G)", "descriptionHtml": "<p>The set of all patterns over the finite shape <code>U<\/code> that appear in the subshift <code>Y<\/code>. Concretely, it collects all restrictions of configurations in <code>Y<\/code> to the finite index set <code>U \u2286 G<\/code>, capturing which local patterns (functions from <code>U<\/code> to the alphabet <code>A<\/code>) are realized by some global configuration in the subshift.<\/p>", "exampleHtml": "", "lineStart": 620, "lineEnd": 628, "state": "unknown", "dependsOn": [{"name": "Pattern", "informal": "The language `languageOn` consists of restrictions of configurations to a finite shape `U`, and each such restriction naturally corresponds to a `Pattern` \u2014 specifically, a finite partial configuration supported on `U`. Thus `Pattern` provides the precise data type that elements of the language live in, packaging the local configuration together with its finite support."}, {"name": "MulSubshift", "informal": "The language function A is defined relative to a specific subshift B, extracting from B's set of configurations all local patterns that appear over the finite shape U. Thus B provides the global dynamical object from which A derives its local combinatorial data."}, {"name": "LanguageOn", "informal": "`MulSubshift.languageOn` is defined by applying `LanguageOn` to the underlying set of configurations of the subshift `Y`; that is, the local pattern language of the subshift over shape `U` is simply the general language construction `LanguageOn` instantiated to the subshift's configuration set."}], "usedByInFile": [], "usesExternal": [], "usedExternally": [], "similar": []}}}
+</script>
+
+<script>
+
+(() => {
+  const data = JSON.parse(document.getElementById('data').textContent);
+  const objects = data.objects;             // name -> object record
+  const fileKey = data.fileKey;             // localStorage prefix uid base
+  const detailsEl = document.getElementById('details');
+
+  function ksKey(name) {
+    return 'informalizer:ks:' + fileKey + '::' + name;
+  }
+  function getKS(name) {
+    const stored = localStorage.getItem(ksKey(name));
+    if (stored && (stored === 'known' || stored === 'learning' || stored === 'unknown')) {
+      return stored;
+    }
+    return objects[name].state || 'unknown';
+  }
+  function setKS(name, state) {
+    localStorage.setItem(ksKey(name), state);
+    objects[name].state = state;
+    refreshHighlights();
+  }
+
+  function refreshHighlights() {
+    document.querySelectorAll('.obj-ref').forEach(el => {
+      const name = el.dataset.obj;
+      el.classList.remove('ks-known', 'ks-learning', 'ks-unknown');
+      el.classList.add('ks-' + getKS(name));
+    });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;',
+      '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
+
+  function objLink(name, label) {
+    const safeLabel = escapeHtml(label || name);
+    return '<span class="obj-link" data-jump="' + escapeHtml(name) + '">' + safeLabel + '</span>';
+  }
+
+  function externalLink(href, label, source) {
+    return '<a href="' + escapeHtml(href) + '" target="_blank">' + escapeHtml(label) +
+           '</a><span class="meta">' + escapeHtml(source || '') + '</span>';
+  }
+
+  function relRow(item) {
+    const link = objLink(item.name);
+    const text = item.informal ? '<span class="rel-text">' + escapeHtml(item.informal) + '</span>' : '';
+    return '<li>' + link + text + '</li>';
+  }
+
+  function externalRow(item) {
+    return '<li>' + externalLink(item.href, item.name, item.source) +
+           (item.informal ? '<span class="rel-text">' + escapeHtml(item.informal) + '</span>' : '') +
+           '</li>';
+  }
+
+  function similarRow(item) {
+    return '<li>' + externalLink(item.href, item.name, item.source) +
+           '<span class="meta">score ' + item.score + '</span></li>';
+  }
+
+  function render(name) {
+    const o = objects[name];
+    if (!o) return;
+    const state = getKS(name);
+    const heading = o.naturalName && o.naturalName.toLowerCase() !== name.toLowerCase()
+      ? escapeHtml(o.naturalName) + ' <code>' + escapeHtml(name) + '</code>'
+      : '<code>' + escapeHtml(name) + '</code>';
+
+    let html = '';
+    html += '<div class="details-header">';
+    html += '<h2>' + heading + '</h2>';
+    html += '<code class="kind">' + escapeHtml(o.kind) + '</code>';
+    html += '</div>';
+    html += '<div class="details-meta">lines ' + o.lineStart + '–' + o.lineEnd + '</div>';
+
+    html += '<div class="ks-controls">';
+    html += '<label>Knowledge state:</label>';
+    html += '<select id="ks-select">';
+    for (const opt of ['known', 'learning', 'unknown']) {
+      html += '<option value="' + opt + '"' + (opt === state ? ' selected' : '') + '>' + opt + '</option>';
+    }
+    html += '</select>';
+    html += '</div>';
+
+    html += '<div class="section"><h3>Signature</h3>';
+    html += '<pre><code>' + escapeHtml(o.signature) + '</code></pre></div>';
+
+    if (o.descriptionHtml) {
+      html += '<div class="section"><h3>Description</h3>' + o.descriptionHtml + '</div>';
+    }
+    if (o.exampleHtml) {
+      html += '<div class="section"><h3>Example</h3>' + o.exampleHtml + '</div>';
+    }
+    if (o.dependsOn && o.dependsOn.length) {
+      html += '<div class="section"><h3>Depends on</h3><ul>' +
+              o.dependsOn.map(relRow).join('') + '</ul></div>';
+    }
+    if (o.usedByInFile && o.usedByInFile.length) {
+      html += '<div class="section"><h3>Used by (this file)</h3><ul>' +
+              o.usedByInFile.map(relRow).join('') + '</ul></div>';
+    }
+    if (o.usesExternal && o.usesExternal.length) {
+      html += '<div class="section"><h3>Uses (other files)</h3><ul>' +
+              o.usesExternal.map(externalRow).join('') + '</ul></div>';
+    }
+    if (o.usedExternally && o.usedExternally.length) {
+      html += '<div class="section"><h3>Used by (other files)</h3><ul>' +
+              o.usedExternally.map(externalRow).join('') + '</ul></div>';
+    }
+    if (o.similar && o.similar.length) {
+      html += '<div class="section"><h3>Similar across the corpus</h3><ul>' +
+              o.similar.map(similarRow).join('') + '</ul></div>';
+    }
+
+    detailsEl.innerHTML = html;
+
+    detailsEl.querySelector('#ks-select').addEventListener('change', e => {
+      setKS(name, e.target.value);
+    });
+    detailsEl.querySelectorAll('[data-jump]').forEach(el => {
+      el.addEventListener('click', () => activate(el.dataset.jump));
+    });
+  }
+
+  function activate(name) {
+    if (!objects[name]) return;
+    document.querySelectorAll('.obj-ref').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.obj-ref[data-obj="' + CSS.escape(name) + '"]')
+      .forEach(el => el.classList.add('active'));
+    render(name);
+    // scroll the first declaration line into view
+    const decl = document.getElementById('line-' + objects[name].lineStart);
+    if (decl) decl.scrollIntoView({block: 'center', behavior: 'smooth'});
+  }
+
+  document.querySelectorAll('.obj-ref').forEach(el => {
+    el.addEventListener('click', () => activate(el.dataset.obj));
+  });
+
+  refreshHighlights();
+})();
+
+</script>
+</body>
+</html>
