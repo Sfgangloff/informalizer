@@ -93,6 +93,109 @@ def topological_sort(
 
 
 # ---------------------------------------------------------------------------
+# Depth & external-reference metrics
+# ---------------------------------------------------------------------------
+
+def compute_in_file_depths(deps: dict[str, set[str]]) -> dict[str, int]:
+    """
+    For each object, the length of the longest dependency chain ending at it
+    (using only file-local deps). Leaves (no in-file deps) have depth 0.
+    Cycle members fall back to 0.
+    """
+    memo: dict[str, int] = {}
+    visiting: set[str] = set()
+
+    def depth(name: str) -> int:
+        if name in memo:
+            return memo[name]
+        if name in visiting:
+            return 0
+        visiting.add(name)
+        d = 0
+        for dep in deps.get(name, ()):
+            if dep in deps:
+                d = max(d, 1 + depth(dep))
+        visiting.discard(name)
+        memo[name] = d
+        return d
+
+    return {name: depth(name) for name in deps}
+
+
+# Tokens that should never be counted as "external references": Lean keywords,
+# tactic combinators, and core Lean type names. Everything else that looks like
+# a namespaced identifier (containing a dot) is treated as a mathlib-style ref.
+_LEAN_NOISE = frozenset({
+    # declaration keywords
+    "theorem", "lemma", "def", "abbrev", "instance", "class", "structure",
+    "inductive", "axiom", "example", "opaque",
+    "private", "protected", "noncomputable", "scoped",
+    # control / binders / proof keywords
+    "by", "fun", "let", "if", "then", "else", "match", "with", "do",
+    "return", "have", "haveI", "show", "obtain", "from", "using", "at",
+    "in", "this", "where", "and", "or", "not",
+    "import", "open", "namespace", "end", "section", "variable", "variables",
+    "universe", "universes", "set_option", "deriving", "extends",
+    # tactic verbs
+    "exact", "exact_mod_cast", "apply", "intro", "intros", "refine", "rfl",
+    "trivial", "simp", "simp_all", "rw", "rewrite", "calc", "constructor",
+    "left", "right", "use", "split", "cases", "rcases", "induction",
+    "linarith", "nlinarith", "ring", "ring_nf", "field_simp", "norm_num",
+    "norm_cast", "push_cast", "push_neg", "omega", "subst", "all_goals",
+    "any_goals", "try", "first", "repeat", "decide", "tauto", "aesop",
+    "by_contra", "contradiction", "ext", "funext", "absurd", "unfold",
+    # core type names that aren't mathlib
+    "Type", "Prop", "Sort", "True", "False", "Bool", "Nat", "Int", "Char",
+    "String", "List", "Array", "Option", "Unit", "Empty", "PUnit",
+    "true", "false",
+})
+
+_IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_']*(?:\.[A-Za-z_][A-Za-z0-9_']*)*")
+
+
+def compute_external_metrics(
+    objects: list[LeanObject],
+) -> dict[str, dict]:
+    """
+    Heuristic proxy for "how much does this object lean on mathlib?".
+
+    For each object, scan its body (with comments stripped) and collect the
+    distinct *namespaced* identifiers (containing at least one dot) that are
+    not file-local — these are overwhelmingly mathlib/external references.
+
+    Returns a dict per object:
+      - ext_refs:  number of distinct external namespaced refs
+      - ns_depth:  max number of dots in any single external ref
+      - refs:      sorted list of those refs (capped to avoid bloat)
+    """
+    local_names = {o.name for o in objects}
+    out: dict[str, dict] = {}
+    for obj in objects:
+        searchable = _strip_comments(obj.raw_text)
+        refs: set[str] = set()
+        for tok in _IDENT_RE.findall(searchable):
+            if "." not in tok:
+                continue
+            if tok in local_names:
+                continue
+            head = tok.split(".", 1)[0]
+            if head in _LEAN_NOISE:
+                continue
+            # also drop refs whose entire prefix happens to be a local name
+            # (e.g. `box.card` if `box` were local — defensive)
+            if head in local_names:
+                continue
+            refs.add(tok)
+        ns_depth = max((t.count(".") for t in refs), default=0)
+        out[obj.name] = {
+            "ext_refs": len(refs),
+            "ns_depth": ns_depth,
+            "refs": sorted(refs)[:25],
+        }
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Categorisation
 # ---------------------------------------------------------------------------
 

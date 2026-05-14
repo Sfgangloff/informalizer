@@ -122,6 +122,106 @@ def _render_matplotlib(
         plt.show()
 
 
+# Fallback fill colours, used only when no category is provided. These mirror
+# the category palette in formatter._CATEGORY_HTML_COLORS so the standalone
+# `graph` subcommand also produces something readable.
+_CATEGORY_COLOR: dict[str, str] = {
+    "Central Result":       "#d8f3dc",
+    "Key Lemma":            "#d6eaf8",
+    "Technical Lemma":      "#fef3e2",
+    "Central Concept":      "#f3e5f5",
+    "Technical Definition": "#f2f2f2",
+    "Core Structure":       "#fde8d8",
+    "Instance":             "#f2f2f2",
+    "Axiom":                "#fffde7",
+    "Other":                "#f2f2f2",
+}
+
+
+def _build_digraph(
+    objects: list[LeanObject],
+    deps: dict[str, set[str]],
+    *,
+    link_anchors: bool = False,
+    categories: dict[str, str] | None = None,
+):
+    """Return a configured graphviz.Digraph for the dependency graph.
+
+    If `categories` is provided, nodes are filled with the *category* colour
+    (matching the badges in the HTML report) rather than the kind-based
+    palette. The category labels then appear as the second line of each node
+    instead of the kind.
+
+    If `link_anchors=True`, each node gets a `URL` pointing at the matching
+    object anchor (`#obj-<name>`) — graphviz emits these as SVG hyperlinks
+    so the user can click a node to jump to its section.
+    """
+    import graphviz  # type: ignore
+
+    dot = graphviz.Digraph(
+        name="dependency_graph",
+        graph_attr={
+            "rankdir": "TB",
+            "splines": "ortho",
+            "bgcolor": "transparent",
+            "fontname": "Helvetica",
+            "pad": "0.4",
+        },
+        node_attr={
+            "shape": "box",
+            "style": "filled,rounded",
+            "fontname": "Helvetica",
+            "fontsize": "11",
+            "margin": "0.15,0.08",
+        },
+        edge_attr={
+            "arrowsize": "0.7",
+            "color": "#555555",
+        },
+    )
+
+    for obj in objects:
+        if categories:
+            cat = categories.get(obj.name, "Other")
+            color = _CATEGORY_COLOR.get(cat, _DEFAULT_COLOR)
+            label = f"{obj.name}\n[{cat}]"
+        else:
+            color = _KIND_COLOR.get(obj.kind, _DEFAULT_COLOR)
+            label = f"{obj.name}\n[{obj.kind}]"
+        kwargs = {"label": label, "fillcolor": color, "id": f"node-{obj.name}"}
+        if link_anchors:
+            kwargs["href"] = f"#obj-{obj.name}"
+            kwargs["target"] = "_self"
+        dot.node(obj.name, **kwargs)
+
+    for name, dependencies in deps.items():
+        for dep in dependencies:
+            dot.edge(name, dep)
+
+    return dot
+
+
+def render_graph_svg(
+    objects: list[LeanObject],
+    deps: dict[str, set[str]],
+    categories: dict[str, str] | None = None,
+) -> str | None:
+    """Render the dependency graph to an inline SVG string with anchor links
+    on each node. Returns the `<svg>...</svg>` body, or None if graphviz
+    isn't available (so the caller can omit the embed silently)."""
+    try:
+        dot = _build_digraph(objects, deps, link_anchors=True, categories=categories)
+        raw = dot.pipe(format="svg").decode("utf-8")
+    except Exception as exc:
+        # Either Python-side import failed, or `dot` binary is missing —
+        # the inline embed is optional, so fail soft.
+        print(f"graph_renderer: SVG embed skipped ({exc})", file=sys.stderr)
+        return None
+
+    idx = raw.find("<svg")
+    return raw[idx:] if idx != -1 else raw
+
+
 def render_graph(
     objects: list[LeanObject],
     deps: dict[str, set[str]],

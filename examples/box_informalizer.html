@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Informalizer Report: box.lean</title>
+  
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']]
+  },
+  svg: { fontCache: 'global' }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 2rem 2.5rem;
+  color: #212529;
+  line-height: 1.65;
+  background: #fff;
+}
+h1 { font-size: 1.75rem; margin-bottom: 0.25rem; }
+h2 {
+  font-size: 1.3rem;
+  margin: 2.5rem 0 1rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid #dee2e6;
+}
+h3 { font-size: 1.05rem; margin: 0; }
+h4 { font-size: 0.95rem; margin: 0.8rem 0 0.3rem; }
+a { color: #0055cc; text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  background: #f3f4f6;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  font-size: 0.875em;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+}
+pre {
+  background: #f6f8fa;
+  padding: 1rem 1.2rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  border: 1px solid #e0e4e8;
+  margin: 0.6rem 0;
+}
+pre code { background: none; padding: 0; font-size: 0.85em; }
+p { margin-bottom: 0.75rem; }
+ul, ol { margin: 0.4rem 0 0.8rem 1.5rem; }
+li { margin-bottom: 0.2rem; }
+
+/* Header */
+.site-header {
+  padding-bottom: 1.2rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 3px solid #0055cc;
+}
+.site-header h1 code { font-size: 1.5rem; background: none; padding: 0; }
+.meta { color: #6c757d; font-size: 0.88rem; margin-top: 0.4rem; }
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 3px;
+  font-size: 0.78em;
+  font-weight: 700;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Quick-reference table */
+.ref-table { width: 100%; border-collapse: collapse; font-size: 0.88em; margin-top: 0.5rem; }
+.ref-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 2px solid #dee2e6;
+}
+.ref-table td { padding: 0.45rem 0.75rem; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+.ref-table tr:hover td { background: #fafbfc; }
+.ref-table td:first-child { font-weight: 600; color: #6c757d; width: 2.5rem; text-align: right; }
+
+/* Object cards */
+#objects { margin-top: 1rem; }
+.object-card {
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  padding: 1.2rem 1.5rem;
+  margin-bottom: 1.5rem;
+  scroll-margin-top: 1rem;
+}
+.object-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 0.75rem; }
+.object-num {
+  background: #0055cc;
+  color: #fff;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+.object-title { flex: 1; }
+.object-meta { font-size: 0.82em; color: #6c757d; margin-top: 0.35rem; display: block; }
+code.kind { background: #e8f0fe; color: #1a3c8e; padding: 0.1em 0.4em; }
+.one-liner { color: #495057; font-style: italic; margin-bottom: 0.9rem; }
+details.sig { margin-bottom: 0.9rem; }
+details.sig summary {
+  cursor: pointer;
+  color: #0055cc;
+  font-size: 0.88em;
+  user-select: none;
+  padding: 0.2rem 0;
+}
+details.sig summary:hover { text-decoration: underline; }
+.description { margin-top: 0.4rem; }
+.used-by {
+  margin-top: 1rem;
+  padding: 0.55rem 0.85rem;
+  background: #f8f9fa;
+  border-left: 3px solid #adb5bd;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.88em;
+}
+.used-by strong { color: #495057; }
+.back-to-top {
+  display: block;
+  text-align: right;
+  font-size: 0.8em;
+  margin-top: 0.9rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+.back-to-top a { color: #adb5bd; }
+.back-to-top a:hover { color: #0055cc; text-decoration: none; }
+
+/* Toolbar + filter UI */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  margin: 1rem 0 0.5rem;
+  background: #f8f9fa;
+  border: 1px solid #e0e4e8;
+  border-radius: 6px;
+  font-size: 0.86rem;
+}
+.toolbar label.cat-toggle {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  user-select: none;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+.toolbar label.cat-toggle:hover { background: #e9ecef; }
+.toolbar .cat-toggle input { margin: 0; }
+.toolbar .cat-toggle.disabled { opacity: 0.4; }
+.toolbar .toolbar-btn {
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: #0055cc;
+  background: none;
+  border: none;
+  padding: 0.1rem 0.3rem;
+}
+.toolbar .toolbar-btn:hover { text-decoration: underline; }
+.toolbar .toolbar-sep { color: #adb5bd; }
+
+/* Depth/refs chips */
+.metric {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  background: #eef2f5;
+  color: #495057;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+.metric.depth { background: #e6f3ff; color: #1a4a8e; }
+.metric.refs  { background: #fef3e2; color: #7d4e1e; }
+.metric.nsd   { background: #f3e5f5; color: #5c1a6e; }
+
+/* Dependency graph embed */
+.graph-embed {
+  border: 1px solid #e0e4e8;
+  border-radius: 6px;
+  padding: 0.5rem;
+  background: #fff;
+  overflow-x: auto;
+  text-align: center;
+}
+.graph-embed svg { max-width: 100%; height: auto; }
+.graph-embed .g-note {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 0.4rem;
+}
+.graph-embed g.node:hover ellipse,
+.graph-embed g.node:hover polygon,
+.graph-embed g.node:hover path,
+.graph-embed g.node:hover rect {
+  stroke: #0055cc;
+  stroke-width: 2;
+}
+.graph-embed g.node a { cursor: pointer; }
+
+/* Filter-hidden rows / cards */
+.ref-table tr.filtered-out,
+.object-card.filtered-out { display: none; }
+
+/* Summary illustrations */
+.summary-visuals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+.summary-visuals figure {
+  margin: 0;
+  border: 1px solid #e0e4e8;
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: #fff;
+  text-align: center;
+}
+.summary-visuals figure svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+.summary-visuals figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #495057;
+  font-style: italic;
+}
+</style>
+</head>
+<body>
+<header id="top" class="site-header">
+  <h1>Informalizer Report: <code>box.lean</code></h1>
+  <p class="meta">Generated on 2026-05-14
+     &middot; 6 Mathlib imports
+     (max namespace depth 4)
+     &middot; 1 other imports</p>
+</header>
+<main>
+<section id="summary">
+<h2>Summary</h2>
+<p>This file develops the combinatorial and geometric theory of <strong>lattice boxes</strong> — discrete hypercubic regions in $\mathbb{Z}^d$ or $\mathbb{N}^d$ — together with their cardinality properties and indexing schemes. It belongs to the intersection of combinatorics, discrete geometry, and formal fintype theory, providing foundational infrastructure for working with finite $d$-dimensional grids.</p>
+<h2>Main Constructions and Results</h2>
+<p>The file introduces two main types of boxes: the <strong>standard box</strong> <code>box d n</code> (the set of $d$-tuples of natural numbers with entries in ${0, \ldots, n-1}$) and the <strong>symmetric box</strong> <code>symBox d n</code> (the discrete hypercube ${-n, \ldots, n}^d \subseteq \mathbb{Z}^d$). Their cardinalities are established as $n^d$ and $(2n+1)^d$ respectively, and both constructions are shown to be monotone in their size parameter. A containment result (<a href="#obj-box_subset_symBox"><code>box_subset_symBox</code></a>) relates the two: the box of side $n+1$ embeds into the symmetric box of half-width $n$. A key geometric lemma (<a href="#obj-Lat-supNorm_sub_ge_of_inner_outer"><code>Lat.supNorm_sub_ge_of_inner_outer</code></a>) quantifies the $\ell^\infty$-distance between nested symmetric boxes: any point outside the shell $Q_{k+r}$ is at least $r+1$ away from any point inside $Q_k$, with an accompanying disjointness result (<a href="#obj-symBox_disjoint_sdiff"><code>symBox_disjoint_sdiff</code></a>).</p>
+<h2>Indexing and Equivalences</h2>
+<p>A central technical contribution is the <strong>base-$n$ indexing system</strong>: <code>boxIndex d n i</code> decodes a flat index $i \in {0, \ldots, n^d - 1}$ into a $d$-tuple via positional base-$n$ notation, while <a href="#obj-boxIndexInv"><code>boxIndexInv</code></a> is its inverse. These are shown to be mutual inverses, establishing a bijection between <code>Fin(n^d)</code> and <code>box d n</code>. This is packaged into explicit equivalences (<a href="#obj-boxIxEquiv"><code>boxIxEquiv</code></a>, <a href="#obj-boxFnEquiv"><code>boxFnEquiv</code></a>, <a href="#obj-patternFnEquiv"><code>patternFnEquiv</code></a>) that identify the box with <code>Fin d → Fin n</code> or <code>Fin(n^d)</code>, making it convenient to transfer computability and decidability. The file culminates in <a href="#obj-fintype_card_pattern_eq"><code>fintype_card_pattern_eq</code></a>, which counts the number of $\alpha$-valued patterns on the box as $|\alpha|^{n^d}$, confirming that all the indexing machinery is consistent with the underlying fintype cardinality arithmetic.</p>
+<div class="summary-visuals">
+<figure><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="86.919pt" height="86.919pt" viewBox="0 0 86.919 86.919">
+<path fill-rule="nonzero" fill="rgb(89.99939%, 89.99939%, 100%)" fill-opacity="1" d="M 4.378906 82.460938 L 4.378906 4.578125 L 82.261719 4.578125 L 82.261719 82.460938 Z M 4.378906 82.460938 "/>
+<path fill="none" stroke-width="0.19925" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(79.998779%, 79.998779%, 79.998779%)" stroke-opacity="1" stroke-miterlimit="10" d="M -38.977013 -31.182462 L 38.978379 -31.182462 M -38.977013 -15.58982 L 38.978379 -15.58982 M -38.977013 -0.00108719 L 38.978379 -0.00108719 M -38.977013 15.591555 L 38.978379 15.591555 M -38.977013 31.180287 L 38.978379 31.180287 M -31.180692 -38.978783 L -31.180692 38.976609 M -15.591959 -38.978783 L -15.591959 38.976609 M 0.000682791 -38.978783 L 0.000682791 38.976609 M 15.589415 -38.978783 L 15.589415 38.976609 M 31.182057 -38.978783 L 31.182057 38.976609 " transform="matrix(0.999069, 0, 0, -0.999069, 43.31963, 43.518445)"/>
+<path fill-rule="nonzero" fill="rgb(64.99939%, 64.99939%, 100%)" fill-opacity="1" d="M 35.53125 51.304688 L 35.53125 4.578125 L 82.261719 4.578125 L 82.261719 51.304688 Z M 35.53125 51.304688 "/>
+<path fill="none" stroke-width="0.79701" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(29.998779%, 29.998779%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M -38.977013 -38.978783 L -38.977013 38.976609 L 38.978379 38.976609 L 38.978379 -38.978783 Z M -38.977013 -38.978783 " transform="matrix(0.999069, 0, 0, -0.999069, 43.31963, 43.518445)"/>
+<path fill="none" stroke-width="1.19553" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(9.999084%, 9.999084%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M -7.795638 -7.793498 L -7.795638 38.976609 L 38.978379 38.976609 L 38.978379 -7.793498 Z M -7.795638 -7.793498 " transform="matrix(0.999069, 0, 0, -0.999069, 43.31963, 43.518445)"/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 13.371094 74.671875 C 13.371094 74.007812 12.832031 73.464844 12.167969 73.464844 C 11.5 73.464844 10.960938 74.007812 10.960938 74.671875 C 10.960938 75.335938 11.5 75.875 12.167969 75.875 C 12.832031 75.875 13.371094 75.335938 13.371094 74.671875 Z M 13.371094 74.671875 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 13.371094 59.09375 C 13.371094 58.429688 12.832031 57.890625 12.167969 57.890625 C 11.5 57.890625 10.960938 58.429688 10.960938 59.09375 C 10.960938 59.761719 11.5 60.300781 12.167969 60.300781 C 12.832031 60.300781 13.371094 59.761719 13.371094 59.09375 Z M 13.371094 59.09375 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 13.371094 43.519531 C 13.371094 42.851562 12.832031 42.3125 12.167969 42.3125 C 11.5 42.3125 10.960938 42.851562 10.960938 43.519531 C 10.960938 44.183594 11.5 44.722656 12.167969 44.722656 C 12.832031 44.722656 13.371094 44.183594 13.371094 43.519531 Z M 13.371094 43.519531 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 13.371094 27.941406 C 13.371094 27.277344 12.832031 26.738281 12.167969 26.738281 C 11.5 26.738281 10.960938 27.277344 10.960938 27.941406 C 10.960938 28.605469 11.5 29.148438 12.167969 29.148438 C 12.832031 29.148438 13.371094 28.605469 13.371094 27.941406 Z M 13.371094 27.941406 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 13.371094 12.367188 C 13.371094 11.699219 12.832031 11.160156 12.167969 11.160156 C 11.5 11.160156 10.960938 11.699219 10.960938 12.367188 C 10.960938 13.03125 11.5 13.570312 12.167969 13.570312 C 12.832031 13.570312 13.371094 13.03125 13.371094 12.367188 Z M 13.371094 12.367188 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 28.949219 74.671875 C 28.949219 74.007812 28.410156 73.464844 27.742188 73.464844 C 27.078125 73.464844 26.539062 74.007812 26.539062 74.671875 C 26.539062 75.335938 27.078125 75.875 27.742188 75.875 C 28.410156 75.875 28.949219 75.335938 28.949219 74.671875 Z M 28.949219 74.671875 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 28.949219 59.09375 C 28.949219 58.429688 28.410156 57.890625 27.742188 57.890625 C 27.078125 57.890625 26.539062 58.429688 26.539062 59.09375 C 26.539062 59.761719 27.078125 60.300781 27.742188 60.300781 C 28.410156 60.300781 28.949219 59.761719 28.949219 59.09375 Z M 28.949219 59.09375 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 28.949219 43.519531 C 28.949219 42.851562 28.410156 42.3125 27.742188 42.3125 C 27.078125 42.3125 26.539062 42.851562 26.539062 43.519531 C 26.539062 44.183594 27.078125 44.722656 27.742188 44.722656 C 28.410156 44.722656 28.949219 44.183594 28.949219 43.519531 Z M 28.949219 43.519531 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 28.949219 27.941406 C 28.949219 27.277344 28.410156 26.738281 27.742188 26.738281 C 27.078125 26.738281 26.539062 27.277344 26.539062 27.941406 C 26.539062 28.605469 27.078125 29.148438 27.742188 29.148438 C 28.410156 29.148438 28.949219 28.605469 28.949219 27.941406 Z M 28.949219 27.941406 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 28.949219 12.367188 C 28.949219 11.699219 28.410156 11.160156 27.742188 11.160156 C 27.078125 11.160156 26.539062 11.699219 26.539062 12.367188 C 26.539062 13.03125 27.078125 13.570312 27.742188 13.570312 C 28.410156 13.570312 28.949219 13.03125 28.949219 12.367188 Z M 28.949219 12.367188 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 44.523438 74.671875 C 44.523438 74.007812 43.984375 73.464844 43.320312 73.464844 C 42.65625 73.464844 42.117188 74.007812 42.117188 74.671875 C 42.117188 75.335938 42.65625 75.875 43.320312 75.875 C 43.984375 75.875 44.523438 75.335938 44.523438 74.671875 Z M 44.523438 74.671875 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 44.523438 59.09375 C 44.523438 58.429688 43.984375 57.890625 43.320312 57.890625 C 42.65625 57.890625 42.117188 58.429688 42.117188 59.09375 C 42.117188 59.761719 42.65625 60.300781 43.320312 60.300781 C 43.984375 60.300781 44.523438 59.761719 44.523438 59.09375 Z M 44.523438 59.09375 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 44.523438 43.519531 C 44.523438 42.851562 43.984375 42.3125 43.320312 42.3125 C 42.65625 42.3125 42.117188 42.851562 42.117188 43.519531 C 42.117188 44.183594 42.65625 44.722656 43.320312 44.722656 C 43.984375 44.722656 44.523438 44.183594 44.523438 43.519531 Z M 44.523438 43.519531 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 44.523438 27.941406 C 44.523438 27.277344 43.984375 26.738281 43.320312 26.738281 C 42.65625 26.738281 42.117188 27.277344 42.117188 27.941406 C 42.117188 28.605469 42.65625 29.148438 43.320312 29.148438 C 43.984375 29.148438 44.523438 28.605469 44.523438 27.941406 Z M 44.523438 27.941406 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 44.523438 12.367188 C 44.523438 11.699219 43.984375 11.160156 43.320312 11.160156 C 42.65625 11.160156 42.117188 11.699219 42.117188 12.367188 C 42.117188 13.03125 42.65625 13.570312 43.320312 13.570312 C 43.984375 13.570312 44.523438 13.03125 44.523438 12.367188 Z M 44.523438 12.367188 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 60.101562 74.671875 C 60.101562 74.007812 59.5625 73.464844 58.894531 73.464844 C 58.230469 73.464844 57.691406 74.007812 57.691406 74.671875 C 57.691406 75.335938 58.230469 75.875 58.894531 75.875 C 59.5625 75.875 60.101562 75.335938 60.101562 74.671875 Z M 60.101562 74.671875 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 60.101562 59.09375 C 60.101562 58.429688 59.5625 57.890625 58.894531 57.890625 C 58.230469 57.890625 57.691406 58.429688 57.691406 59.09375 C 57.691406 59.761719 58.230469 60.300781 58.894531 60.300781 C 59.5625 60.300781 60.101562 59.761719 60.101562 59.09375 Z M 60.101562 59.09375 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 60.101562 43.519531 C 60.101562 42.851562 59.5625 42.3125 58.894531 42.3125 C 58.230469 42.3125 57.691406 42.851562 57.691406 43.519531 C 57.691406 44.183594 58.230469 44.722656 58.894531 44.722656 C 59.5625 44.722656 60.101562 44.183594 60.101562 43.519531 Z M 60.101562 43.519531 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 60.101562 27.941406 C 60.101562 27.277344 59.5625 26.738281 58.894531 26.738281 C 58.230469 26.738281 57.691406 27.277344 57.691406 27.941406 C 57.691406 28.605469 58.230469 29.148438 58.894531 29.148438 C 59.5625 29.148438 60.101562 28.605469 60.101562 27.941406 Z M 60.101562 27.941406 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 60.101562 12.367188 C 60.101562 11.699219 59.5625 11.160156 58.894531 11.160156 C 58.230469 11.160156 57.691406 11.699219 57.691406 12.367188 C 57.691406 13.03125 58.230469 13.570312 58.894531 13.570312 C 59.5625 13.570312 60.101562 13.03125 60.101562 12.367188 Z M 60.101562 12.367188 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 75.675781 74.671875 C 75.675781 74.007812 75.136719 73.464844 74.472656 73.464844 C 73.808594 73.464844 73.269531 74.007812 73.269531 74.671875 C 73.269531 75.335938 73.808594 75.875 74.472656 75.875 C 75.136719 75.875 75.675781 75.335938 75.675781 74.671875 Z M 75.675781 74.671875 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 75.675781 59.09375 C 75.675781 58.429688 75.136719 57.890625 74.472656 57.890625 C 73.808594 57.890625 73.269531 58.429688 73.269531 59.09375 C 73.269531 59.761719 73.808594 60.300781 74.472656 60.300781 C 75.136719 60.300781 75.675781 59.761719 75.675781 59.09375 Z M 75.675781 59.09375 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 75.675781 43.519531 C 75.675781 42.851562 75.136719 42.3125 74.472656 42.3125 C 73.808594 42.3125 73.269531 42.851562 73.269531 43.519531 C 73.269531 44.183594 73.808594 44.722656 74.472656 44.722656 C 75.136719 44.722656 75.675781 44.183594 75.675781 43.519531 Z M 75.675781 43.519531 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 75.675781 27.941406 C 75.675781 27.277344 75.136719 26.738281 74.472656 26.738281 C 73.808594 26.738281 73.269531 27.277344 73.269531 27.941406 C 73.269531 28.605469 73.808594 29.148438 74.472656 29.148438 C 75.136719 29.148438 75.675781 28.605469 75.675781 27.941406 Z M 75.675781 27.941406 "/>
+<path fill-rule="nonzero" fill="rgb(69.999695%, 69.999695%, 69.999695%)" fill-opacity="1" d="M 75.675781 12.367188 C 75.675781 11.699219 75.136719 11.160156 74.472656 11.160156 C 73.808594 11.160156 73.269531 11.699219 73.269531 12.367188 C 73.269531 13.03125 73.808594 13.570312 74.472656 13.570312 C 75.136719 13.570312 75.675781 13.03125 75.675781 12.367188 Z M 75.675781 12.367188 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 44.960938 43.519531 C 44.960938 42.613281 44.226562 41.875 43.320312 41.875 C 42.414062 41.875 41.675781 42.613281 41.675781 43.519531 C 41.675781 44.425781 42.414062 45.160156 43.320312 45.160156 C 44.226562 45.160156 44.960938 44.425781 44.960938 43.519531 Z M 44.960938 43.519531 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 44.960938 27.941406 C 44.960938 27.035156 44.226562 26.300781 43.320312 26.300781 C 42.414062 26.300781 41.675781 27.035156 41.675781 27.941406 C 41.675781 28.847656 42.414062 29.585938 43.320312 29.585938 C 44.226562 29.585938 44.960938 28.847656 44.960938 27.941406 Z M 44.960938 27.941406 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 44.960938 12.367188 C 44.960938 11.457031 44.226562 10.722656 43.320312 10.722656 C 42.414062 10.722656 41.675781 11.457031 41.675781 12.367188 C 41.675781 13.273438 42.414062 14.007812 43.320312 14.007812 C 44.226562 14.007812 44.960938 13.273438 44.960938 12.367188 Z M 44.960938 12.367188 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 60.539062 43.519531 C 60.539062 42.613281 59.804688 41.875 58.894531 41.875 C 57.988281 41.875 57.253906 42.613281 57.253906 43.519531 C 57.253906 44.425781 57.988281 45.160156 58.894531 45.160156 C 59.804688 45.160156 60.539062 44.425781 60.539062 43.519531 Z M 60.539062 43.519531 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 60.539062 27.941406 C 60.539062 27.035156 59.804688 26.300781 58.894531 26.300781 C 57.988281 26.300781 57.253906 27.035156 57.253906 27.941406 C 57.253906 28.847656 57.988281 29.585938 58.894531 29.585938 C 59.804688 29.585938 60.539062 28.847656 60.539062 27.941406 Z M 60.539062 27.941406 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 60.539062 12.367188 C 60.539062 11.457031 59.804688 10.722656 58.894531 10.722656 C 57.988281 10.722656 57.253906 11.457031 57.253906 12.367188 C 57.253906 13.273438 57.988281 14.007812 58.894531 14.007812 C 59.804688 14.007812 60.539062 13.273438 60.539062 12.367188 Z M 60.539062 12.367188 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 76.113281 43.519531 C 76.113281 42.613281 75.378906 41.875 74.472656 41.875 C 73.566406 41.875 72.828125 42.613281 72.828125 43.519531 C 72.828125 44.425781 73.566406 45.160156 74.472656 45.160156 C 75.378906 45.160156 76.113281 44.425781 76.113281 43.519531 Z M 76.113281 43.519531 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 76.113281 27.941406 C 76.113281 27.035156 75.378906 26.300781 74.472656 26.300781 C 73.566406 26.300781 72.828125 27.035156 72.828125 27.941406 C 72.828125 28.847656 73.566406 29.585938 74.472656 29.585938 C 75.378906 29.585938 76.113281 28.847656 76.113281 27.941406 Z M 76.113281 27.941406 "/>
+<path fill-rule="nonzero" fill="rgb(19.999695%, 19.999695%, 100%)" fill-opacity="1" d="M 76.113281 12.367188 C 76.113281 11.457031 75.378906 10.722656 74.472656 10.722656 C 73.566406 10.722656 72.828125 11.457031 72.828125 12.367188 C 72.828125 13.273438 73.566406 14.007812 74.472656 14.007812 C 75.378906 14.007812 76.113281 13.273438 76.113281 12.367188 Z M 76.113281 12.367188 "/>
+</svg>
+<figcaption>The 2D box $\{0,1,2\}^2$ (left) embedded inside the symmetric box $\{-2,\ldots,2\}^2$ (right), illustrating the containment `box_subset_symBox`.</figcaption></figure>
+<figure><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="80.25pt" height="82.182pt" viewBox="0 0 80.25 82.182">
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.0010698 0.000903087 L 0.0010698 15.816933 L 15.8171 15.816933 L 15.8171 0.000903087 Z M 0.0010698 0.000903087 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.0010698 19.332045 L 0.0010698 35.148075 L 15.8171 35.148075 L 15.8171 19.332045 Z M 0.0010698 19.332045 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.0010698 38.663186 L 0.0010698 54.483161 L 15.8171 54.483161 L 15.8171 38.663186 Z M 0.0010698 38.663186 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 19.332211 0.000903087 L 19.332211 15.816933 L 35.148241 15.816933 L 35.148241 0.000903087 Z M 19.332211 0.000903087 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 19.332211 19.332045 L 19.332211 35.148075 L 35.148241 35.148075 L 35.148241 19.332045 Z M 19.332211 19.332045 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 19.332211 38.663186 L 19.332211 54.483161 L 35.148241 54.483161 L 35.148241 38.663186 Z M 19.332211 38.663186 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 38.663353 0.000903087 L 38.663353 15.816933 L 54.483328 15.816933 L 54.483328 0.000903087 Z M 38.663353 0.000903087 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 38.663353 19.332045 L 38.663353 35.148075 L 54.483328 35.148075 L 54.483328 19.332045 Z M 38.663353 19.332045 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(79.998779%, 79.998779%, 100%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M 38.663353 38.663186 L 38.663353 54.483161 L 54.483328 54.483161 L 54.483328 38.663186 Z M 38.663353 38.663186 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 15.054688 50.257812 C 15.054688 48.566406 13.6875 47.199219 11.996094 47.199219 C 10.308594 47.199219 8.941406 48.566406 8.941406 50.257812 C 8.941406 51.945312 10.308594 53.3125 11.996094 53.3125 C 13.6875 53.3125 15.054688 51.945312 15.054688 50.257812 Z M 15.054688 50.257812 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 34.199219 50.257812 C 34.199219 48.566406 32.828125 47.199219 31.140625 47.199219 C 29.449219 47.199219 28.082031 48.566406 28.082031 50.257812 C 28.082031 51.945312 29.449219 53.3125 31.140625 53.3125 C 32.828125 53.3125 34.199219 51.945312 34.199219 50.257812 Z M 34.199219 50.257812 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 53.339844 50.257812 C 53.339844 48.566406 51.96875 47.199219 50.28125 47.199219 C 48.59375 47.199219 47.222656 48.566406 47.222656 50.257812 C 47.222656 51.945312 48.59375 53.3125 50.28125 53.3125 C 51.96875 53.3125 53.339844 51.945312 53.339844 50.257812 Z M 53.339844 50.257812 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 15.054688 31.113281 C 15.054688 29.425781 13.6875 28.054688 11.996094 28.054688 C 10.308594 28.054688 8.941406 29.425781 8.941406 31.113281 C 8.941406 32.804688 10.308594 34.171875 11.996094 34.171875 C 13.6875 34.171875 15.054688 32.804688 15.054688 31.113281 Z M 15.054688 31.113281 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 34.199219 31.113281 C 34.199219 29.425781 32.828125 28.054688 31.140625 28.054688 C 29.449219 28.054688 28.082031 29.425781 28.082031 31.113281 C 28.082031 32.804688 29.449219 34.171875 31.140625 34.171875 C 32.828125 34.171875 34.199219 32.804688 34.199219 31.113281 Z M 34.199219 31.113281 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 53.339844 31.113281 C 53.339844 29.425781 51.96875 28.054688 50.28125 28.054688 C 48.59375 28.054688 47.222656 29.425781 47.222656 31.113281 C 47.222656 32.804688 48.59375 34.171875 50.28125 34.171875 C 51.96875 34.171875 53.339844 32.804688 53.339844 31.113281 Z M 53.339844 31.113281 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 15.054688 11.972656 C 15.054688 10.285156 13.6875 8.914062 11.996094 8.914062 C 10.308594 8.914062 8.941406 10.285156 8.941406 11.972656 C 8.941406 13.660156 10.308594 15.03125 11.996094 15.03125 C 13.6875 15.03125 15.054688 13.660156 15.054688 11.972656 Z M 15.054688 11.972656 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 34.199219 11.972656 C 34.199219 10.285156 32.828125 8.914062 31.140625 8.914062 C 29.449219 8.914062 28.082031 10.285156 28.082031 11.972656 C 28.082031 13.660156 29.449219 15.03125 31.140625 15.03125 C 32.828125 15.03125 34.199219 13.660156 34.199219 11.972656 Z M 34.199219 11.972656 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 64.99939%, 29.998779%)" fill-opacity="1" d="M 53.339844 11.972656 C 53.339844 10.285156 51.96875 8.914062 50.28125 8.914062 C 48.59375 8.914062 47.222656 10.285156 47.222656 11.972656 C 47.222656 13.660156 48.59375 15.03125 50.28125 15.03125 C 51.96875 15.03125 53.339844 13.660156 53.339844 11.972656 Z M 53.339844 11.972656 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 0.876889 -19.334184 L 0.876889 -13.179779 L 7.204879 -13.179779 L 7.204879 -19.334184 Z M 0.876889 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 4.040884 -13.179779 L 7.796649 -0.381775 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.071554 2.390437 C -1.691899 0.955842 -0.851459 0.277243 -0.00136723 0.000296891 C -0.849203 -0.277157 -1.694224 -0.956718 -2.071133 -2.391192 " transform="matrix(0.278656, -0.950064, -0.950064, -0.278656, 11.942069, 58.276128)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 8.964407 -19.334184 L 8.964407 -13.179779 L 15.288452 -13.179779 L 15.288452 -19.334184 Z M 8.964407 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 12.128402 -13.179779 L 26.942369 -0.263421 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.073912 2.391868 C -1.693342 0.955461 -0.850111 0.27768 0.00210641 0.000370658 C -0.848446 -0.27865 -1.694257 -0.954407 -2.071549 -2.389473 " transform="matrix(0.746222, -0.650763, -0.650763, -0.746222, 30.990857, 58.216491)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 17.047981 -19.334184 L 17.047981 -13.179779 L 23.375971 -13.179779 L 23.375971 -19.334184 Z M 17.047981 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 20.211976 -13.179779 L 46.218279 -0.176628 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.073081 2.389937 C -1.691983 0.955476 -0.848606 0.277938 0.0000689214 -0.000844994 C -0.848611 -0.277848 -1.695529 -0.957135 -2.073124 -2.39159 " transform="matrix(0.885566, -0.442793, -0.442793, -0.885566, 50.105034, 58.175063)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 25.131554 -19.334184 L 25.131554 -13.179779 L 31.459544 -13.179779 L 31.459544 -19.334184 Z M 25.131554 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 28.295549 -13.179779 L 8.120149 18.996709 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.073878 2.391047 C -1.693323 0.955663 -0.851228 0.278631 -0.000604482 0.00138149 C -0.852042 -0.279659 -1.695694 -0.956741 -2.073744 -2.391437 " transform="matrix(-0.525985, -0.83885, -0.83885, 0.525985, 12.102403, 39.112048)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 33.215127 -19.334184 L 33.215127 -13.179779 L 39.543117 -13.179779 L 39.543117 -19.334184 Z M 33.215127 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 36.379122 -13.179779 L 27.348717 18.949367 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.071566 2.391182 C -1.692017 0.956683 -0.850186 0.277457 -0.0014178 0.00200287 C -0.851047 -0.279656 -1.693018 -0.956895 -2.071636 -2.391396 " transform="matrix(-0.267913, -0.953163, -0.953163, 0.267913, 31.192935, 39.134831)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 41.302645 -19.334184 L 41.302645 -13.179779 L 47.62669 -13.179779 L 47.62669 -19.334184 Z M 41.302645 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 44.46664 -13.179779 L 46.54967 18.933586 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.071409 2.391214 C -1.693728 0.956816 -0.851205 0.280032 0.0012191 -0.000747742 C -0.850639 -0.277394 -1.692204 -0.956642 -2.073505 -2.392816 " transform="matrix(0.0640723, -0.988016, -0.988016, -0.0640723, 50.268714, 39.141782)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 49.386219 -19.334184 L 49.386219 -13.179779 L 55.714209 -13.179779 L 55.714209 -19.334184 Z M 49.386219 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 52.550214 -13.179779 L 8.167491 38.363356 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.071926 2.389646 C -1.693407 0.954807 -0.848464 0.279363 0.000358974 0.00145728 C -0.848848 -0.277374 -1.693383 -0.955903 -2.070162 -2.391199 " transform="matrix(-0.64602, -0.750302, -0.750302, 0.64602, 12.126325, 19.952453)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 57.469792 -19.334184 L 57.469792 -13.179779 L 63.797782 -13.179779 L 63.797782 -19.334184 Z M 57.469792 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 60.633787 -13.179779 L 27.455236 38.331795 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.073107 2.391423 C -1.693642 0.955052 -0.847958 0.278971 0.000201633 0.000182501 C -0.850097 -0.278093 -1.6941 -0.954617 -2.070823 -2.391996 " transform="matrix(-0.536124, -0.832395, -0.832395, 0.536124, 31.246354, 19.96882)"/>
+<path fill-rule="nonzero" fill="rgb(100%, 79.998779%, 59.999084%)" fill-opacity="1" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 65.553365 -19.334184 L 65.553365 -13.179779 L 71.881355 -13.179779 L 71.881355 -19.334184 Z M 65.553365 -19.334184 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M 68.71736 -13.179779 L 46.731146 38.300234 " transform="matrix(0.990145, 0, 0, -0.990145, 4.166909, 58.086832)"/>
+<path fill="none" stroke-width="0.3985" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 59.999084%, 19.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.0721 2.390455 C -1.694262 0.954907 -0.851107 0.277298 -0.000148968 -0.000374646 C -0.849393 -0.281146 -1.694536 -0.954069 -2.073031 -2.392607 " transform="matrix(-0.388919, -0.910527, -0.910527, 0.388919, 50.358976, 19.984385)"/>
+</svg>
+<figcaption>Base-$n$ indexing bijection: flat indices $0,1,\ldots,n^d-1$ (bottom row) map to $d$-tuples in the box (grid), illustrating `boxIndex` and `boxIndexInv`.</figcaption></figure>
+<figure><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="118.977pt" height="118.977pt" viewBox="0 0 118.977 118.977">
+<path fill-rule="nonzero" fill="rgb(87.5%, 87.5%, 87.5%)" fill-opacity="1" d="M 4.382812 114.574219 L 4.382812 4.382812 L 114.570312 4.382812 L 114.570312 114.574219 Z M 4.382812 114.574219 "/>
+<path fill-rule="nonzero" fill="rgb(84.999084%, 84.999084%, 100%)" fill-opacity="1" d="M 19.6875 99.269531 L 19.6875 19.6875 L 99.265625 19.6875 L 99.265625 99.269531 Z M 19.6875 99.269531 "/>
+<path fill-rule="nonzero" fill="rgb(54.998779%, 54.998779%, 100%)" fill-opacity="1" stroke-width="1.19553" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(19.999695%, 19.999695%, 100%)" stroke-opacity="1" stroke-miterlimit="10" d="M -21.429863 -21.428983 L -21.429863 21.430863 L 21.429983 21.430863 L 21.429983 -21.428983 Z M -21.429863 -21.428983 " transform="matrix(0.999807, 0, 0, -0.999807, 59.476502, 59.477502)"/>
+<path fill="none" stroke-width="0.79701" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(39.99939%, 39.99939%, 100%)" stroke-opacity="1" stroke-dasharray="2.98883 2.98883" stroke-miterlimit="10" d="M -39.796694 -39.799722 L -39.796694 39.797694 L 39.796815 39.797694 L 39.796815 -39.799722 Z M -39.796694 -39.799722 " transform="matrix(0.999807, 0, 0, -0.999807, 59.476502, 59.477502)"/>
+<path fill="none" stroke-width="0.79701" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(69.999695%, 69.999695%, 69.999695%)" stroke-opacity="1" stroke-miterlimit="10" d="M -55.10434 -55.107368 L -55.10434 55.10534 L 55.104461 55.10534 L 55.104461 -55.107368 Z M -55.10434 -55.107368 " transform="matrix(0.999807, 0, 0, -0.999807, 59.476502, 59.477502)"/>
+<path fill-rule="nonzero" fill="rgb(9.999084%, 9.999084%, 100%)" fill-opacity="1" d="M 70.8125 53.355469 C 70.8125 52.167969 69.847656 51.203125 68.660156 51.203125 C 67.472656 51.203125 66.507812 52.167969 66.507812 53.355469 C 66.507812 54.542969 67.472656 55.507812 68.660156 55.507812 C 69.847656 55.507812 70.8125 54.542969 70.8125 53.355469 Z M 70.8125 53.355469 "/>
+<path fill-rule="nonzero" fill="rgb(100%, 29.998779%, 29.998779%)" fill-opacity="1" d="M 109.070312 16.625 C 109.070312 15.4375 108.109375 14.472656 106.917969 14.472656 C 105.730469 14.472656 104.769531 15.4375 104.769531 16.625 C 104.769531 17.8125 105.730469 18.777344 106.917969 18.777344 C 108.109375 18.777344 109.070312 17.8125 109.070312 16.625 Z M 109.070312 16.625 "/>
+<path fill="none" stroke-width="0.79701" stroke-linecap="butt" stroke-linejoin="miter" stroke="rgb(100%, 29.998779%, 29.998779%)" stroke-opacity="1" stroke-miterlimit="10" d="M 9.759759 6.674105 L 46.876308 42.309898 " transform="matrix(0.999807, 0, 0, -0.999807, 59.476502, 59.477502)"/>
+<path fill="none" stroke-width="0.79701" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 29.998779%, 29.998779%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.55111 3.112509 C -2.084674 1.245725 -1.046983 0.363301 -0.000503155 -0.0021983 C -1.04596 -0.363437 -2.086338 -1.244079 -2.551154 -3.110536 " transform="matrix(-0.721231, 0.692366, 0.692366, 0.721231, 68.946472, 53.080059)"/>
+<path fill="none" stroke-width="0.79701" stroke-linecap="round" stroke-linejoin="round" stroke="rgb(100%, 29.998779%, 29.998779%)" stroke-opacity="1" stroke-miterlimit="10" d="M -2.553056 3.11092 C -2.08662 1.244136 -1.046223 0.364531 0.0002567 -0.00096897 C -1.0452 -0.362207 -2.085578 -1.24285 -2.550394 -3.109306 " transform="matrix(0.721231, -0.692366, -0.692366, -0.721231, 106.631956, 16.901823)"/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 45.515625 74.78125 C 45.515625 74.039062 44.914062 73.4375 44.171875 73.4375 C 43.429688 73.4375 42.828125 74.039062 42.828125 74.78125 C 42.828125 75.523438 43.429688 76.125 44.171875 76.125 C 44.914062 76.125 45.515625 75.523438 45.515625 74.78125 Z M 45.515625 74.78125 "/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 45.515625 59.476562 C 45.515625 58.734375 44.914062 58.132812 44.171875 58.132812 C 43.429688 58.132812 42.828125 58.734375 42.828125 59.476562 C 42.828125 60.21875 43.429688 60.820312 44.171875 60.820312 C 44.914062 60.820312 45.515625 60.21875 45.515625 59.476562 Z M 45.515625 59.476562 "/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 45.515625 44.171875 C 45.515625 43.429688 44.914062 42.828125 44.171875 42.828125 C 43.429688 42.828125 42.828125 43.429688 42.828125 44.171875 C 42.828125 44.917969 43.429688 45.519531 44.171875 45.519531 C 44.914062 45.519531 45.515625 44.917969 45.515625 44.171875 Z M 45.515625 44.171875 "/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 60.820312 74.78125 C 60.820312 74.039062 60.21875 73.4375 59.476562 73.4375 C 58.734375 73.4375 58.132812 74.039062 58.132812 74.78125 C 58.132812 75.523438 58.734375 76.125 59.476562 76.125 C 60.21875 76.125 60.820312 75.523438 60.820312 74.78125 Z M 60.820312 74.78125 "/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 60.820312 59.476562 C 60.820312 58.734375 60.21875 58.132812 59.476562 58.132812 C 58.734375 58.132812 58.132812 58.734375 58.132812 59.476562 C 58.132812 60.21875 58.734375 60.820312 59.476562 60.820312 C 60.21875 60.820312 60.820312 60.21875 60.820312 59.476562 Z M 60.820312 59.476562 "/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 60.820312 44.171875 C 60.820312 43.429688 60.21875 42.828125 59.476562 42.828125 C 58.734375 42.828125 58.132812 43.429688 58.132812 44.171875 C 58.132812 44.917969 58.734375 45.519531 59.476562 45.519531 C 60.21875 45.519531 60.820312 44.917969 60.820312 44.171875 Z M 60.820312 44.171875 "/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 76.125 74.78125 C 76.125 74.039062 75.523438 73.4375 74.78125 73.4375 C 74.039062 73.4375 73.4375 74.039062 73.4375 74.78125 C 73.4375 75.523438 74.039062 76.125 74.78125 76.125 C 75.523438 76.125 76.125 75.523438 76.125 74.78125 Z M 76.125 74.78125 "/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 76.125 59.476562 C 76.125 58.734375 75.523438 58.132812 74.78125 58.132812 C 74.039062 58.132812 73.4375 58.734375 73.4375 59.476562 C 73.4375 60.21875 74.039062 60.820312 74.78125 60.820312 C 75.523438 60.820312 76.125 60.21875 76.125 59.476562 Z M 76.125 59.476562 "/>
+<path fill-rule="nonzero" fill="rgb(29.998779%, 29.998779%, 100%)" fill-opacity="1" d="M 76.125 44.171875 C 76.125 43.429688 75.523438 42.828125 74.78125 42.828125 C 74.039062 42.828125 73.4375 43.429688 73.4375 44.171875 C 73.4375 44.917969 74.039062 45.519531 74.78125 45.519531 C 75.523438 45.519531 76.125 44.917969 76.125 44.171875 Z M 76.125 44.171875 "/>
+</svg>
+<figcaption>Nested symmetric boxes $Q_k \subset Q_{k+r}$ in 2D: any point inside $Q_k$ (dark center) is at $\ell^\infty$-distance at least $r+1$ from any point outside $Q_{k+r}$ (outer region), illustrating `Lat.supNorm_sub_ge_of_inner_outer`.</figcaption></figure>
+</div>
+</section>
+<section id="dependency-graph">
+<h2>Dependency Graph</h2>
+<div class="graph-embed">
+<div class="g-note">Click any node to jump to its description.</div>
+<svg width="1216pt" height="382pt"
+ viewBox="0.00 0.00 1216.00 382.00" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="graph0" class="graph" transform="scale(1 1) rotate(0) translate(28.8 352.8)">
+<title>dependency_graph</title>
+<!-- box_card -->
+<g id="node&#45;box_card" class="node">
+<title>box_card</title>
+<g id="a_node&#45;box_card"><a xlink:href="#obj-box_card" xlink:title="box_card&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M543.48,-324C543.48,-324 470.88,-324 470.88,-324 464.88,-324 458.88,-318 458.88,-312 458.88,-312 458.88,-300 458.88,-300 458.88,-294 464.88,-288 470.88,-288 470.88,-288 543.48,-288 543.48,-288 549.48,-288 555.48,-294 555.48,-300 555.48,-300 555.48,-312 555.48,-312 555.48,-318 549.48,-324 543.48,-324"/>
+<text xml:space="preserve" text-anchor="middle" x="507.18" y="-307.55" font-family="Helvetica,sans-Serif" font-size="11.00">box_card</text>
+<text xml:space="preserve" text-anchor="middle" x="507.18" y="-295.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- box_mono -->
+<g id="node&#45;box_mono" class="node">
+<title>box_mono</title>
+<g id="a_node&#45;box_mono"><a xlink:href="#obj-box_mono" xlink:title="box_mono&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M658.47,-324C658.47,-324 585.88,-324 585.88,-324 579.88,-324 573.88,-318 573.88,-312 573.88,-312 573.88,-300 573.88,-300 573.88,-294 579.88,-288 585.88,-288 585.88,-288 658.47,-288 658.47,-288 664.47,-288 670.47,-294 670.47,-300 670.47,-300 670.47,-312 670.47,-312 670.47,-318 664.47,-324 658.47,-324"/>
+<text xml:space="preserve" text-anchor="middle" x="622.17" y="-307.55" font-family="Helvetica,sans-Serif" font-size="11.00">box_mono</text>
+<text xml:space="preserve" text-anchor="middle" x="622.17" y="-295.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- box_zero -->
+<g id="node&#45;box_zero" class="node">
+<title>box_zero</title>
+<g id="a_node&#45;box_zero"><a xlink:href="#obj-box_zero" xlink:title="box_zero&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M773.47,-324C773.47,-324 700.88,-324 700.88,-324 694.88,-324 688.88,-318 688.88,-312 688.88,-312 688.88,-300 688.88,-300 688.88,-294 694.88,-288 700.88,-288 700.88,-288 773.47,-288 773.47,-288 779.47,-288 785.47,-294 785.47,-300 785.47,-300 785.47,-312 785.47,-312 785.47,-318 779.47,-324 773.47,-324"/>
+<text xml:space="preserve" text-anchor="middle" x="737.17" y="-307.55" font-family="Helvetica,sans-Serif" font-size="11.00">box_zero</text>
+<text xml:space="preserve" text-anchor="middle" x="737.17" y="-295.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- boxFnEquiv -->
+<g id="node&#45;boxFnEquiv" class="node">
+<title>boxFnEquiv</title>
+<g id="a_node&#45;boxFnEquiv"><a xlink:href="#obj-boxFnEquiv" xlink:title="boxFnEquiv&#10;[Central Concept]" target="_self">
+<path fill="#f3e5f5" stroke="black" d="M388.35,-36C388.35,-36 306,-36 306,-36 300,-36 294,-30 294,-24 294,-24 294,-12 294,-12 294,-6 300,0 306,0 306,0 388.35,0 388.35,0 394.35,0 400.35,-6 400.35,-12 400.35,-12 400.35,-24 400.35,-24 400.35,-30 394.35,-36 388.35,-36"/>
+<text xml:space="preserve" text-anchor="middle" x="347.18" y="-19.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxFnEquiv</text>
+<text xml:space="preserve" text-anchor="middle" x="347.18" y="-7.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Concept]</text>
+</a>
+</g>
+</g>
+<!-- boxIndex -->
+<g id="node&#45;boxIndex" class="node">
+<title>boxIndex</title>
+<g id="a_node&#45;boxIndex"><a xlink:href="#obj-boxIndex" xlink:title="boxIndex&#10;[Central Concept]" target="_self">
+<path fill="#f3e5f5" stroke="black" d="M642.35,-108C642.35,-108 560,-108 560,-108 554,-108 548,-102 548,-96 548,-96 548,-84 548,-84 548,-78 554,-72 560,-72 560,-72 642.35,-72 642.35,-72 648.35,-72 654.35,-78 654.35,-84 654.35,-84 654.35,-96 654.35,-96 654.35,-102 648.35,-108 642.35,-108"/>
+<text xml:space="preserve" text-anchor="middle" x="601.17" y="-91.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxIndex</text>
+<text xml:space="preserve" text-anchor="middle" x="601.17" y="-79.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Concept]</text>
+</a>
+</g>
+</g>
+<!-- boxIndexInv -->
+<g id="node&#45;boxIndexInv" class="node">
+<title>boxIndexInv</title>
+<g id="a_node&#45;boxIndexInv"><a xlink:href="#obj-boxIndexInv" xlink:title="boxIndexInv&#10;[Central Concept]" target="_self">
+<path fill="#f3e5f5" stroke="black" d="M94.35,-108C94.35,-108 12,-108 12,-108 6,-108 0,-102 0,-96 0,-96 0,-84 0,-84 0,-78 6,-72 12,-72 12,-72 94.35,-72 94.35,-72 100.35,-72 106.35,-78 106.35,-84 106.35,-84 106.35,-96 106.35,-96 106.35,-102 100.35,-108 94.35,-108"/>
+<text xml:space="preserve" text-anchor="middle" x="53.18" y="-91.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxIndexInv</text>
+<text xml:space="preserve" text-anchor="middle" x="53.18" y="-79.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Concept]</text>
+</a>
+</g>
+</g>
+<!-- symBox -->
+<g id="node&#45;symBox" class="node">
+<title>symBox</title>
+<g id="a_node&#45;symBox"><a xlink:href="#obj-symBox" xlink:title="symBox&#10;[Central Concept]" target="_self">
+<path fill="#f3e5f5" stroke="black" d="M860.35,-180C860.35,-180 778,-180 778,-180 772,-180 766,-174 766,-168 766,-168 766,-156 766,-156 766,-150 772,-144 778,-144 778,-144 860.35,-144 860.35,-144 866.35,-144 872.35,-150 872.35,-156 872.35,-156 872.35,-168 872.35,-168 872.35,-174 866.35,-180 860.35,-180"/>
+<text xml:space="preserve" text-anchor="middle" x="819.17" y="-163.55" font-family="Helvetica,sans-Serif" font-size="11.00">symBox</text>
+<text xml:space="preserve" text-anchor="middle" x="819.17" y="-151.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Concept]</text>
+</a>
+</g>
+</g>
+<!-- boxIxEquiv -->
+<g id="node&#45;boxIxEquiv" class="node">
+<title>boxIxEquiv</title>
+<g id="a_node&#45;boxIxEquiv"><a xlink:href="#obj-boxIxEquiv" xlink:title="boxIxEquiv&#10;[Central Concept]" target="_self">
+<path fill="#f3e5f5" stroke="black" d="M388.35,-108C388.35,-108 306,-108 306,-108 300,-108 294,-102 294,-96 294,-96 294,-84 294,-84 294,-78 300,-72 306,-72 306,-72 388.35,-72 388.35,-72 394.35,-72 400.35,-78 400.35,-84 400.35,-84 400.35,-96 400.35,-96 400.35,-102 394.35,-108 388.35,-108"/>
+<text xml:space="preserve" text-anchor="middle" x="347.18" y="-91.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxIxEquiv</text>
+<text xml:space="preserve" text-anchor="middle" x="347.18" y="-79.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Concept]</text>
+</a>
+</g>
+</g>
+<!-- boxIxEquiv&#45;&gt;boxFnEquiv -->
+<g id="edge1" class="edge">
+<title>boxIxEquiv&#45;&gt;boxFnEquiv</title>
+<path fill="none" stroke="#555555" d="M347.18,-71.83C347.18,-71.83 347.18,-44.93 347.18,-44.93"/>
+<polygon fill="#555555" stroke="#555555" points="349.63,-44.93 347.18,-37.93 344.73,-44.93 349.63,-44.93"/>
+</g>
+<!-- boxIndex_mem -->
+<g id="node&#45;boxIndex_mem" class="node">
+<title>boxIndex_mem</title>
+<g id="a_node&#45;boxIndex_mem"><a xlink:href="#obj-boxIndex_mem" xlink:title="boxIndex_mem&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M675.47,-180C675.47,-180 602.88,-180 602.88,-180 596.88,-180 590.88,-174 590.88,-168 590.88,-168 590.88,-156 590.88,-156 590.88,-150 596.88,-144 602.88,-144 602.88,-144 675.47,-144 675.47,-144 681.47,-144 687.47,-150 687.47,-156 687.47,-156 687.47,-168 687.47,-168 687.47,-174 681.47,-180 675.47,-180"/>
+<text xml:space="preserve" text-anchor="middle" x="639.17" y="-163.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxIndex_mem</text>
+<text xml:space="preserve" text-anchor="middle" x="639.17" y="-151.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- boxIndex_mem&#45;&gt;boxIndex -->
+<g id="edge4" class="edge">
+<title>boxIndex_mem&#45;&gt;boxIndex</title>
+<path fill="none" stroke="#555555" d="M622.61,-143.83C622.61,-143.83 622.61,-116.93 622.61,-116.93"/>
+<polygon fill="#555555" stroke="#555555" points="625.06,-116.93 622.61,-109.93 620.16,-116.93 625.06,-116.93"/>
+</g>
+<!-- symBox_card -->
+<g id="node&#45;symBox_card" class="node">
+<title>symBox_card</title>
+<g id="a_node&#45;symBox_card"><a xlink:href="#obj-symBox_card" xlink:title="symBox_card&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M878.47,-252C878.47,-252 805.88,-252 805.88,-252 799.88,-252 793.88,-246 793.88,-240 793.88,-240 793.88,-228 793.88,-228 793.88,-222 799.88,-216 805.88,-216 805.88,-216 878.47,-216 878.47,-216 884.47,-216 890.47,-222 890.47,-228 890.47,-228 890.47,-240 890.47,-240 890.47,-246 884.47,-252 878.47,-252"/>
+<text xml:space="preserve" text-anchor="middle" x="842.17" y="-235.55" font-family="Helvetica,sans-Serif" font-size="11.00">symBox_card</text>
+<text xml:space="preserve" text-anchor="middle" x="842.17" y="-223.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- symBox_card&#45;&gt;symBox -->
+<g id="edge22" class="edge">
+<title>symBox_card&#45;&gt;symBox</title>
+<path fill="none" stroke="#555555" d="M833.11,-215.83C833.11,-215.83 833.11,-188.93 833.11,-188.93"/>
+<polygon fill="#555555" stroke="#555555" points="835.56,-188.93 833.11,-181.93 830.66,-188.93 835.56,-188.93"/>
+</g>
+<!-- symBox_mono -->
+<g id="node&#45;symBox_mono" class="node">
+<title>symBox_mono</title>
+<g id="a_node&#45;symBox_mono"><a xlink:href="#obj-symBox_mono" xlink:title="symBox_mono&#10;[Technical Lemma]" target="_self">
+<path fill="#fef3e2" stroke="black" d="M1007.6,-252C1007.6,-252 920.75,-252 920.75,-252 914.75,-252 908.75,-246 908.75,-240 908.75,-240 908.75,-228 908.75,-228 908.75,-222 914.75,-216 920.75,-216 920.75,-216 1007.6,-216 1007.6,-216 1013.6,-216 1019.6,-222 1019.6,-228 1019.6,-228 1019.6,-240 1019.6,-240 1019.6,-246 1013.6,-252 1007.6,-252"/>
+<text xml:space="preserve" text-anchor="middle" x="964.17" y="-235.55" font-family="Helvetica,sans-Serif" font-size="11.00">symBox_mono</text>
+<text xml:space="preserve" text-anchor="middle" x="964.17" y="-223.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Technical Lemma]</text>
+</a>
+</g>
+</g>
+<!-- symBox_mono&#45;&gt;symBox -->
+<g id="edge23" class="edge">
+<title>symBox_mono&#45;&gt;symBox</title>
+<path fill="none" stroke="#555555" d="M964.17,-215.62C964.17,-196.09 964.17,-168 964.17,-168 964.17,-168 881.27,-168 881.27,-168"/>
+<polygon fill="#555555" stroke="#555555" points="881.27,-165.55 874.27,-168 881.27,-170.45 881.27,-165.55"/>
+</g>
+<!-- box_subset_symBox -->
+<g id="node&#45;box_subset_symBox" class="node">
+<title>box_subset_symBox</title>
+<g id="a_node&#45;box_subset_symBox"><a xlink:href="#obj-box_subset_symBox" xlink:title="box_subset_symBox&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M1146.47,-252C1146.47,-252 1049.88,-252 1049.88,-252 1043.88,-252 1037.88,-246 1037.88,-240 1037.88,-240 1037.88,-228 1037.88,-228 1037.88,-222 1043.88,-216 1049.88,-216 1049.88,-216 1146.47,-216 1146.47,-216 1152.47,-216 1158.47,-222 1158.47,-228 1158.47,-228 1158.47,-240 1158.47,-240 1158.47,-246 1152.47,-252 1146.47,-252"/>
+<text xml:space="preserve" text-anchor="middle" x="1098.17" y="-235.55" font-family="Helvetica,sans-Serif" font-size="11.00">box_subset_symBox</text>
+<text xml:space="preserve" text-anchor="middle" x="1098.17" y="-223.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- box_subset_symBox&#45;&gt;symBox -->
+<g id="edge24" class="edge">
+<title>box_subset_symBox&#45;&gt;symBox</title>
+<path fill="none" stroke="#555555" d="M1098.17,-215.52C1098.17,-192.45 1098.17,-156 1098.17,-156 1098.17,-156 881.15,-156 881.15,-156"/>
+<polygon fill="#555555" stroke="#555555" points="881.15,-153.55 874.15,-156 881.15,-158.45 881.15,-153.55"/>
+</g>
+<!-- Lat.supNorm_sub_ge_of_inner_outer -->
+<g id="node&#45;Lat.supNorm_sub_ge_of_inner_outer" class="node">
+<title>Lat.supNorm_sub_ge_of_inner_outer</title>
+<g id="a_node&#45;Lat.supNorm_sub_ge_of_inner_outer"><a xlink:href="#obj-Lat.supNorm_sub_ge_of_inner_outer" xlink:title="Lat.supNorm_sub_ge_of_inner_outer&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M726.6,-252C726.6,-252 549.75,-252 549.75,-252 543.75,-252 537.75,-246 537.75,-240 537.75,-240 537.75,-228 537.75,-228 537.75,-222 543.75,-216 549.75,-216 549.75,-216 726.6,-216 726.6,-216 732.6,-216 738.6,-222 738.6,-228 738.6,-228 738.6,-240 738.6,-240 738.6,-246 732.6,-252 726.6,-252"/>
+<text xml:space="preserve" text-anchor="middle" x="638.17" y="-235.55" font-family="Helvetica,sans-Serif" font-size="11.00">Lat.supNorm_sub_ge_of_inner_outer</text>
+<text xml:space="preserve" text-anchor="middle" x="638.17" y="-223.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- Lat.supNorm_sub_ge_of_inner_outer&#45;&gt;symBox -->
+<g id="edge27" class="edge">
+<title>Lat.supNorm_sub_ge_of_inner_outer&#45;&gt;symBox</title>
+<path fill="none" stroke="#555555" d="M739.01,-234C761.58,-234 778.98,-234 778.98,-234 778.98,-234 778.98,-188.68 778.98,-188.68"/>
+<polygon fill="#555555" stroke="#555555" points="781.43,-188.68 778.98,-181.68 776.53,-188.68 781.43,-188.68"/>
+</g>
+<!-- patternFnEquiv -->
+<g id="node&#45;patternFnEquiv" class="node">
+<title>patternFnEquiv</title>
+<g id="a_node&#45;patternFnEquiv"><a xlink:href="#obj-patternFnEquiv" xlink:title="patternFnEquiv&#10;[Technical Definition]" target="_self">
+<path fill="#f2f2f2" stroke="black" d="M189.1,-180C189.1,-180 93.25,-180 93.25,-180 87.25,-180 81.25,-174 81.25,-168 81.25,-168 81.25,-156 81.25,-156 81.25,-150 87.25,-144 93.25,-144 93.25,-144 189.1,-144 189.1,-144 195.1,-144 201.1,-150 201.1,-156 201.1,-156 201.1,-168 201.1,-168 201.1,-174 195.1,-180 189.1,-180"/>
+<text xml:space="preserve" text-anchor="middle" x="141.18" y="-163.55" font-family="Helvetica,sans-Serif" font-size="11.00">patternFnEquiv</text>
+<text xml:space="preserve" text-anchor="middle" x="141.18" y="-151.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Technical Definition]</text>
+</a>
+</g>
+</g>
+<!-- patternFnEquiv&#45;&gt;boxIxEquiv -->
+<g id="edge2" class="edge">
+<title>patternFnEquiv&#45;&gt;boxIxEquiv</title>
+<path fill="none" stroke="#555555" d="M153.73,-143.62C153.73,-119.72 153.73,-81 153.73,-81 153.73,-81 285.03,-81 285.03,-81"/>
+<polygon fill="#555555" stroke="#555555" points="285.03,-83.45 292.03,-81 285.03,-78.55 285.03,-83.45"/>
+</g>
+<!-- boxIxEquiv_val -->
+<g id="node&#45;boxIxEquiv_val" class="node">
+<title>boxIxEquiv_val</title>
+<g id="a_node&#45;boxIxEquiv_val"><a xlink:href="#obj-boxIxEquiv_val" xlink:title="boxIxEquiv_val&#10;[Key Lemma]" target="_self">
+<path fill="#d6eaf8" stroke="black" d="M300.98,-180C300.98,-180 231.38,-180 231.38,-180 225.38,-180 219.38,-174 219.38,-168 219.38,-168 219.38,-156 219.38,-156 219.38,-150 225.38,-144 231.38,-144 231.38,-144 300.98,-144 300.98,-144 306.98,-144 312.98,-150 312.98,-156 312.98,-156 312.98,-168 312.98,-168 312.98,-174 306.98,-180 300.98,-180"/>
+<text xml:space="preserve" text-anchor="middle" x="266.18" y="-163.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxIxEquiv_val</text>
+<text xml:space="preserve" text-anchor="middle" x="266.18" y="-151.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Key Lemma]</text>
+</a>
+</g>
+</g>
+<!-- boxIxEquiv_val&#45;&gt;boxFnEquiv -->
+<g id="edge5" class="edge">
+<title>boxIxEquiv_val&#45;&gt;boxFnEquiv</title>
+<path fill="none" stroke="#555555" d="M269.12,-143.76C269.12,-105.01 269.12,-18 269.12,-18 269.12,-18 285.31,-18 285.31,-18"/>
+<polygon fill="#555555" stroke="#555555" points="285.31,-20.45 292.31,-18 285.31,-15.55 285.31,-20.45"/>
+</g>
+<!-- boxIxEquiv_val&#45;&gt;boxIndexInv -->
+<g id="edge6" class="edge">
+<title>boxIxEquiv_val&#45;&gt;boxIndexInv</title>
+<path fill="none" stroke="#555555" d="M244.25,-143.83C244.25,-122.5 244.25,-90 244.25,-90 244.25,-90 115.17,-90 115.17,-90"/>
+<polygon fill="#555555" stroke="#555555" points="115.17,-87.55 108.17,-90 115.17,-92.45 115.17,-87.55"/>
+</g>
+<!-- boxIxEquiv_val&#45;&gt;boxIxEquiv -->
+<g id="edge7" class="edge">
+<title>boxIxEquiv_val&#45;&gt;boxIxEquiv</title>
+<path fill="none" stroke="#555555" d="M303.49,-143.83C303.49,-143.83 303.49,-116.93 303.49,-116.93"/>
+<polygon fill="#555555" stroke="#555555" points="305.94,-116.93 303.49,-109.93 301.04,-116.93 305.94,-116.93"/>
+</g>
+<!-- boxIxEquiv_symm_val -->
+<g id="node&#45;boxIxEquiv_symm_val" class="node">
+<title>boxIxEquiv_symm_val</title>
+<g id="a_node&#45;boxIxEquiv_symm_val"><a xlink:href="#obj-boxIxEquiv_symm_val" xlink:title="boxIxEquiv_symm_val&#10;[Key Lemma]" target="_self">
+<path fill="#d6eaf8" stroke="black" d="M523.23,-180C523.23,-180 419.12,-180 419.12,-180 413.12,-180 407.12,-174 407.12,-168 407.12,-168 407.12,-156 407.12,-156 407.12,-150 413.12,-144 419.12,-144 419.12,-144 523.23,-144 523.23,-144 529.23,-144 535.23,-150 535.23,-156 535.23,-156 535.23,-168 535.23,-168 535.23,-174 529.23,-180 523.23,-180"/>
+<text xml:space="preserve" text-anchor="middle" x="471.18" y="-163.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxIxEquiv_symm_val</text>
+<text xml:space="preserve" text-anchor="middle" x="471.18" y="-151.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Key Lemma]</text>
+</a>
+</g>
+</g>
+<!-- boxIxEquiv_symm_val&#45;&gt;boxFnEquiv -->
+<g id="edge9" class="edge">
+<title>boxIxEquiv_symm_val&#45;&gt;boxFnEquiv</title>
+<path fill="none" stroke="#555555" d="M471.18,-143.76C471.18,-105.01 471.18,-18 471.18,-18 471.18,-18 409.36,-18 409.36,-18"/>
+<polygon fill="#555555" stroke="#555555" points="409.36,-15.55 402.36,-18 409.36,-20.45 409.36,-15.55"/>
+</g>
+<!-- boxIxEquiv_symm_val&#45;&gt;boxIndex -->
+<g id="edge8" class="edge">
+<title>boxIxEquiv_symm_val&#45;&gt;boxIndex</title>
+<path fill="none" stroke="#555555" d="M535.72,-162C548.84,-162 558.72,-162 558.72,-162 558.72,-162 558.72,-116.68 558.72,-116.68"/>
+<polygon fill="#555555" stroke="#555555" points="561.17,-116.68 558.72,-109.68 556.27,-116.68 561.17,-116.68"/>
+</g>
+<!-- boxIxEquiv_symm_val&#45;&gt;boxIxEquiv -->
+<g id="edge10" class="edge">
+<title>boxIxEquiv_symm_val&#45;&gt;boxIxEquiv</title>
+<path fill="none" stroke="#555555" d="M406.77,-153C401.67,-153 398.43,-153 398.43,-153 398.43,-153 398.43,-116.74 398.43,-116.74"/>
+<polygon fill="#555555" stroke="#555555" points="400.88,-116.74 398.43,-109.74 395.98,-116.74 400.88,-116.74"/>
+</g>
+<!-- symBox_disjoint_sdiff -->
+<g id="node&#45;symBox_disjoint_sdiff" class="node">
+<title>symBox_disjoint_sdiff</title>
+<g id="a_node&#45;symBox_disjoint_sdiff"><a xlink:href="#obj-symBox_disjoint_sdiff" xlink:title="symBox_disjoint_sdiff&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M915.35,-324C915.35,-324 815,-324 815,-324 809,-324 803,-318 803,-312 803,-312 803,-300 803,-300 803,-294 809,-288 815,-288 815,-288 915.35,-288 915.35,-288 921.35,-288 927.35,-294 927.35,-300 927.35,-300 927.35,-312 927.35,-312 927.35,-318 921.35,-324 915.35,-324"/>
+<text xml:space="preserve" text-anchor="middle" x="865.17" y="-307.55" font-family="Helvetica,sans-Serif" font-size="11.00">symBox_disjoint_sdiff</text>
+<text xml:space="preserve" text-anchor="middle" x="865.17" y="-295.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- symBox_disjoint_sdiff&#45;&gt;symBox -->
+<g id="edge26" class="edge">
+<title>symBox_disjoint_sdiff&#45;&gt;symBox</title>
+<path fill="none" stroke="#555555" d="M802.83,-306C795,-306 789.67,-306 789.67,-306 789.67,-306 789.67,-188.75 789.67,-188.75"/>
+<polygon fill="#555555" stroke="#555555" points="792.13,-188.75 789.68,-181.75 787.23,-188.75 792.13,-188.75"/>
+</g>
+<!-- symBox_disjoint_sdiff&#45;&gt;symBox_mono -->
+<g id="edge25" class="edge">
+<title>symBox_disjoint_sdiff&#45;&gt;symBox_mono</title>
+<path fill="none" stroke="#555555" d="M918.05,-287.83C918.05,-287.83 918.05,-260.93 918.05,-260.93"/>
+<polygon fill="#555555" stroke="#555555" points="920.5,-260.93 918.05,-253.93 915.6,-260.93 920.5,-260.93"/>
+</g>
+<!-- fintype_card_pattern_eq -->
+<g id="node&#45;fintype_card_pattern_eq" class="node">
+<title>fintype_card_pattern_eq</title>
+<g id="a_node&#45;fintype_card_pattern_eq"><a xlink:href="#obj-fintype_card_pattern_eq" xlink:title="fintype_card_pattern_eq&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M198.1,-252C198.1,-252 84.25,-252 84.25,-252 78.25,-252 72.25,-246 72.25,-240 72.25,-240 72.25,-228 72.25,-228 72.25,-222 78.25,-216 84.25,-216 84.25,-216 198.1,-216 198.1,-216 204.1,-216 210.1,-222 210.1,-228 210.1,-228 210.1,-240 210.1,-240 210.1,-246 204.1,-252 198.1,-252"/>
+<text xml:space="preserve" text-anchor="middle" x="141.18" y="-235.55" font-family="Helvetica,sans-Serif" font-size="11.00">fintype_card_pattern_eq</text>
+<text xml:space="preserve" text-anchor="middle" x="141.18" y="-223.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- fintype_card_pattern_eq&#45;&gt;patternFnEquiv -->
+<g id="edge3" class="edge">
+<title>fintype_card_pattern_eq&#45;&gt;patternFnEquiv</title>
+<path fill="none" stroke="#555555" d="M141.18,-215.83C141.18,-215.83 141.18,-188.93 141.18,-188.93"/>
+<polygon fill="#555555" stroke="#555555" points="143.63,-188.93 141.18,-181.93 138.73,-188.93 143.63,-188.93"/>
+</g>
+<!-- boxIndex_boxIndexInv -->
+<g id="node&#45;boxIndex_boxIndexInv" class="node">
+<title>boxIndex_boxIndexInv</title>
+<g id="a_node&#45;boxIndex_boxIndexInv"><a xlink:href="#obj-boxIndex_boxIndexInv" xlink:title="boxIndex_boxIndexInv&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M360.6,-252C360.6,-252 255.75,-252 255.75,-252 249.75,-252 243.75,-246 243.75,-240 243.75,-240 243.75,-228 243.75,-228 243.75,-222 249.75,-216 255.75,-216 255.75,-216 360.6,-216 360.6,-216 366.6,-216 372.6,-222 372.6,-228 372.6,-228 372.6,-240 372.6,-240 372.6,-246 366.6,-252 360.6,-252"/>
+<text xml:space="preserve" text-anchor="middle" x="308.18" y="-235.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxIndex_boxIndexInv</text>
+<text xml:space="preserve" text-anchor="middle" x="308.18" y="-223.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- boxIndex_boxIndexInv&#45;&gt;boxIndex -->
+<g id="edge14" class="edge">
+<title>boxIndex_boxIndexInv&#45;&gt;boxIndex</title>
+<path fill="none" stroke="#555555" d="M327.88,-215.7C327.88,-203.24 327.88,-189 327.88,-189 327.88,-189 569.44,-189 569.44,-189 569.44,-189 569.44,-116.67 569.44,-116.67"/>
+<polygon fill="#555555" stroke="#555555" points="571.89,-116.67 569.44,-109.67 566.99,-116.67 571.89,-116.67"/>
+</g>
+<!-- boxIndex_boxIndexInv&#45;&gt;boxIndexInv -->
+<g id="edge15" class="edge">
+<title>boxIndex_boxIndexInv&#45;&gt;boxIndexInv</title>
+<path fill="none" stroke="#555555" d="M243.28,-234C227.34,-234 214.74,-234 214.74,-234 214.74,-234 214.74,-99 214.74,-99 214.74,-99 115.04,-99 115.04,-99"/>
+<polygon fill="#555555" stroke="#555555" points="115.04,-96.55 108.04,-99 115.04,-101.45 115.04,-96.55"/>
+</g>
+<!-- boxIndex_boxIndexInv&#45;&gt;boxIxEquiv -->
+<g id="edge11" class="edge">
+<title>boxIndex_boxIndexInv&#45;&gt;boxIxEquiv</title>
+<path fill="none" stroke="#555555" d="M342.79,-215.76C342.79,-215.76 342.79,-116.6 342.79,-116.6"/>
+<polygon fill="#555555" stroke="#555555" points="345.24,-116.6 342.79,-109.6 340.34,-116.6 345.24,-116.6"/>
+</g>
+<!-- boxIndex_boxIndexInv&#45;&gt;boxIxEquiv_val -->
+<g id="edge13" class="edge">
+<title>boxIndex_boxIndexInv&#45;&gt;boxIxEquiv_val</title>
+<path fill="none" stroke="#555555" d="M278.36,-215.83C278.36,-215.83 278.36,-188.93 278.36,-188.93"/>
+<polygon fill="#555555" stroke="#555555" points="280.81,-188.93 278.36,-181.93 275.91,-188.93 280.81,-188.93"/>
+</g>
+<!-- boxIndex_boxIndexInv&#45;&gt;boxIxEquiv_symm_val -->
+<g id="edge12" class="edge">
+<title>boxIndex_boxIndexInv&#45;&gt;boxIxEquiv_symm_val</title>
+<path fill="none" stroke="#555555" d="M357.69,-215.83C357.69,-194.5 357.69,-162 357.69,-162 357.69,-162 398.29,-162 398.29,-162"/>
+<polygon fill="#555555" stroke="#555555" points="398.29,-164.45 405.29,-162 398.29,-159.55 398.29,-164.45"/>
+</g>
+<!-- boxIndexInv_boxIndex -->
+<g id="node&#45;boxIndexInv_boxIndex" class="node">
+<title>boxIndexInv_boxIndex</title>
+<g id="a_node&#45;boxIndexInv_boxIndex"><a xlink:href="#obj-boxIndexInv_boxIndex" xlink:title="boxIndexInv_boxIndex&#10;[Central Result]" target="_self">
+<path fill="#d8f3dc" stroke="black" d="M507.6,-252C507.6,-252 402.75,-252 402.75,-252 396.75,-252 390.75,-246 390.75,-240 390.75,-240 390.75,-228 390.75,-228 390.75,-222 396.75,-216 402.75,-216 402.75,-216 507.6,-216 507.6,-216 513.6,-216 519.6,-222 519.6,-228 519.6,-228 519.6,-240 519.6,-240 519.6,-246 513.6,-252 507.6,-252"/>
+<text xml:space="preserve" text-anchor="middle" x="455.18" y="-235.55" font-family="Helvetica,sans-Serif" font-size="11.00">boxIndexInv_boxIndex</text>
+<text xml:space="preserve" text-anchor="middle" x="455.18" y="-223.55" font-family="Helvetica,sans-Serif" font-size="11.00">[Central Result]</text>
+</a>
+</g>
+</g>
+<!-- boxIndexInv_boxIndex&#45;&gt;boxIndex -->
+<g id="edge20" class="edge">
+<title>boxIndexInv_boxIndex&#45;&gt;boxIndex</title>
+<path fill="none" stroke="#555555" d="M463.36,-215.58C463.36,-206.72 463.36,-198 463.36,-198 463.36,-198 580.16,-198 580.16,-198 580.16,-198 580.16,-116.83 580.16,-116.83"/>
+<polygon fill="#555555" stroke="#555555" points="582.61,-116.83 580.16,-109.83 577.71,-116.83 582.61,-116.83"/>
+</g>
+<!-- boxIndexInv_boxIndex&#45;&gt;boxIndexInv -->
+<g id="edge21" class="edge">
+<title>boxIndexInv_boxIndex&#45;&gt;boxIndexInv</title>
+<path fill="none" stroke="#555555" d="M394.59,-215.68C394.59,-184.87 394.59,-126 394.59,-126 394.59,-126 93.8,-126 93.8,-126 93.8,-126 93.8,-116.94 93.8,-116.94"/>
+<polygon fill="#555555" stroke="#555555" points="96.25,-116.94 93.8,-109.94 91.35,-116.94 96.25,-116.94"/>
+</g>
+<!-- boxIndexInv_boxIndex&#45;&gt;symBox -->
+<g id="edge16" class="edge">
+<title>boxIndexInv_boxIndex&#45;&gt;symBox</title>
+<path fill="none" stroke="#555555" d="M491.48,-215.54C491.48,-210.8 491.48,-207 491.48,-207 491.48,-207 772.49,-207 772.49,-207 772.49,-207 772.49,-188.82 772.49,-188.82"/>
+<polygon fill="#555555" stroke="#555555" points="774.94,-188.82 772.49,-181.82 770.04,-188.82 774.94,-188.82"/>
+</g>
+<!-- boxIndexInv_boxIndex&#45;&gt;boxIxEquiv -->
+<g id="edge17" class="edge">
+<title>boxIndexInv_boxIndex&#45;&gt;boxIxEquiv</title>
+<path fill="none" stroke="#555555" d="M396.51,-215.76C396.51,-215.76 396.51,-116.6 396.51,-116.6"/>
+<polygon fill="#555555" stroke="#555555" points="398.96,-116.6 396.51,-109.6 394.06,-116.6 398.96,-116.6"/>
+</g>
+<!-- boxIndexInv_boxIndex&#45;&gt;boxIxEquiv_val -->
+<g id="edge19" class="edge">
+<title>boxIndexInv_boxIndex&#45;&gt;boxIxEquiv_val</title>
+<path fill="none" stroke="#555555" d="M392.67,-215.78C392.67,-197.17 392.67,-171 392.67,-171 392.67,-171 321.79,-171 321.79,-171"/>
+<polygon fill="#555555" stroke="#555555" points="321.79,-168.55 314.79,-171 321.79,-173.45 321.79,-168.55"/>
+</g>
+<!-- boxIndexInv_boxIndex&#45;&gt;boxIxEquiv_symm_val -->
+<g id="edge18" class="edge">
+<title>boxIndexInv_boxIndex&#45;&gt;boxIxEquiv_symm_val</title>
+<path fill="none" stroke="#555555" d="M435.24,-215.83C435.24,-215.83 435.24,-188.93 435.24,-188.93"/>
+<polygon fill="#555555" stroke="#555555" points="437.69,-188.93 435.24,-181.93 432.79,-188.93 437.69,-188.93"/>
+</g>
+</g>
+</svg>
+
+</div>
+</section>
+<section id="quick-reference">
+<h2>Quick Reference</h2>
+<div class="toolbar" id="cat-toolbar"><strong>Filter:</strong><label class="cat-toggle"><input type="checkbox" data-cat="Central Concept" checked><span class="badge" style="background:#f3e5f5;color:#5c1a6e">Central Concept</span></label><label class="cat-toggle"><input type="checkbox" data-cat="Central Result" checked><span class="badge" style="background:#d8f3dc;color:#1a5c2a">Central Result</span></label><label class="cat-toggle"><input type="checkbox" data-cat="Key Lemma" checked><span class="badge" style="background:#d6eaf8;color:#1a3c6e">Key Lemma</span></label><label class="cat-toggle"><input type="checkbox" data-cat="Technical Definition" checked><span class="badge" style="background:#f2f2f2;color:#444444">Technical Definition</span></label><label class="cat-toggle"><input type="checkbox" data-cat="Technical Lemma" checked><span class="badge" style="background:#fef3e2;color:#7d4e1e">Technical Lemma</span></label><span class="toolbar-sep">|</span><button class="toolbar-btn" id="cat-all">all</button><button class="toolbar-btn" id="cat-none">none</button><span class="toolbar-sep">|</span><span style="color:#6c757d"><span class="metric depth">d=N</span> in-file depth · <span class="metric refs">ext=N</span> external refs · <span class="metric nsd">ns=N</span> namespace depth</span></div>
+<table class="ref-table"><thead><tr><th>#</th><th>Kind</th><th>Category</th><th>Name</th><th>Depth</th><th>Ext</th><th>Summary</th></tr></thead><tbody>
+<tr data-category="Central Result"><td>1</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-box_card">Cardinality of Combinatorial Box <code>box_card</code></a></td><td>0</td><td>1 <span class="metric nsd">ns=1</span></td><td>This theorem states that the number of elements in the combinatorial box `box d n` equals $n^d$.</td></tr>
+<tr data-category="Central Result"><td>2</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-box_mono">Monotonicity of Box in Upper Bound <code>box_mono</code></a></td><td>0</td><td>2 <span class="metric nsd">ns=1</span></td><td>This theorem states that the combinatorial box of dimension `d` with upper bound `m` is a subset of the box with upper bound `n`, whenever `m ≤ n`.</td></tr>
+<tr data-category="Central Result"><td>3</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-box_zero">Empty Box at Zero Radius <code>box_zero</code></a></td><td>0</td><td>0</td><td>This theorem states that the combinatorial box of dimension $d$ (with $d &gt; 0$) at radius $0$ is the empty set.</td></tr>
+<tr data-category="Central Concept"><td>4</td><td><code>def</code></td><td><span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span></td><td><a href="#obj-boxFnEquiv">Bijection Between Box Subtype and Finite Functions <code>boxFnEquiv</code></a></td><td>0</td><td>4 <span class="metric nsd">ns=1</span></td><td>This is a computable equivalence (bijection) between the subtype of vectors belonging to the combinatorial &quot;box&quot; `box d n` and the type of functions `Fin d → Fin n`.</td></tr>
+<tr data-category="Central Concept"><td>5</td><td><code>def</code></td><td><span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span></td><td><a href="#obj-boxIndex">Base-n Digit Enumeration of Lattice Points <code>boxIndex</code></a></td><td>0</td><td>1 <span class="metric nsd">ns=1</span></td><td>This definition maps a natural number index `i` to the `i`-th lattice point in the `d`-dimensional box `{0, 1, ..., n-1}^d`, using the standard base-`n` positional numeral system.</td></tr>
+<tr data-category="Central Concept"><td>6</td><td><code>def</code></td><td><span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span></td><td><a href="#obj-boxIndexInv">Lattice point to base-n index <code>boxIndexInv</code></a></td><td>0</td><td>2 <span class="metric nsd">ns=2</span></td><td>This function converts a lattice point `w` in the `d`-dimensional box (whose coordinates range in `{0, ..., n-1}`) to its corresponding index in `{0, ..., n^d - 1}` by interpreting the coordinates as a base-`n` number.</td></tr>
+<tr data-category="Central Concept"><td>7</td><td><code>def</code></td><td><span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span></td><td><a href="#obj-symBox">Symmetric Integer Box in d Dimensions <code>symBox</code></a></td><td>0</td><td>2 <span class="metric nsd">ns=1</span></td><td>This is a definition of the symmetric box $Q_n = \{-n, \ldots, n\}^d \subseteq \mathbb{Z}^d$, which is the $d$-fold Cartesian product of the integer interval $[-n, n]$ with itself.</td></tr>
+<tr data-category="Central Concept"><td>8</td><td><code>def</code></td><td><span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span></td><td><a href="#obj-boxIxEquiv">Box-to-Fin Power Equivalence <code>boxIxEquiv</code></a></td><td>1</td><td>0</td><td>This definition constructs an explicit bijection between the elements of the combinatorial box `box d n` (the set of functions from `Fin d` to `Fin n`, representing $d$-tuples of elements from $\{0,\ldots,n-1\}$) and the finite type `Fin (n^d)`.</td></tr>
+<tr data-category="Central Result"><td>9</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-boxIndex_mem">Box Index Membership <code>boxIndex_mem</code></a></td><td>1</td><td>5 <span class="metric nsd">ns=1</span></td><td>This theorem states that for any natural numbers $d$, $n$, and $i$ with $i &lt; n^d$, the tuple `boxIndex d n i` (which decodes the integer $i$ into a $d$-dimensional multi-index via mixed-radix representation in base $n$) is a member of the box $\{0, 1, \ldots, n-1\}^d$.</td></tr>
+<tr data-category="Central Result"><td>10</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-symBox_card">Cardinality of Symmetric Box <code>symBox_card</code></a></td><td>1</td><td>2 <span class="metric nsd">ns=1</span></td><td>This theorem states that the symmetric box in dimension $d$ with parameter $n$ has exactly $(2n+1)^d$ elements.</td></tr>
+<tr data-category="Technical Lemma"><td>11</td><td><code>theorem</code></td><td><span style="background:#fef3e2;color:#7d4e1e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Technical Lemma</span></td><td><a href="#obj-symBox_mono">Monotonicity of Symmetric Box <code>symBox_mono</code></a></td><td>1</td><td>2 <span class="metric nsd">ns=1</span></td><td>This theorem states that the symmetric box of dimension `d` and size `m` is contained in the symmetric box of dimension `d` and size `n`, whenever `m ≤ n`.</td></tr>
+<tr data-category="Central Result"><td>12</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-box_subset_symBox">Box Contained in Symmetric Box <code>box_subset_symBox</code></a></td><td>1</td><td>3 <span class="metric nsd">ns=1</span></td><td>This theorem states that the box of side length `n+1` in dimension `d` is a subset of the symmetric box of dimension `d` with parameter `n`.</td></tr>
+<tr data-category="Central Result"><td>13</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-Lat-supNorm_sub_ge_of_inner_outer">Sup-norm lower bound for inner-outer box separation <code>Lat.supNorm_sub_ge_of_inner_outer</code></a></td><td>1</td><td>9 <span class="metric nsd">ns=2</span></td><td>This theorem states that if `u` lies in the symmetric box `Q_k` (the lattice points with sup-norm at most `k`) and `v` lies in the larger symmetric box `Q_N` but outside `Q_{k+r}`, then the sup-norm distance between `v` and `u` is at least `r + 1`.</td></tr>
+<tr data-category="Technical Definition"><td>14</td><td><code>def</code></td><td><span style="background:#f2f2f2;color:#444444;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Technical Definition</span></td><td><a href="#obj-patternFnEquiv">Pattern-to-Function Equivalence for Boxes <code>patternFnEquiv</code></a></td><td>2</td><td>2 <span class="metric nsd">ns=1</span></td><td>This definition establishes an equivalence between patterns of type `α` indexed by the box `box d n` (a `d`-dimensional hypercubic grid of side length `n`) and functions from `Fin (n^d)` to `α`.</td></tr>
+<tr data-category="Key Lemma"><td>15</td><td><code>theorem</code></td><td><span style="background:#d6eaf8;color:#1a3c6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Key Lemma</span></td><td><a href="#obj-boxIxEquiv_val">Box Index Equivalence Value Compatibility <code>boxIxEquiv_val</code></a></td><td>2</td><td>2 <span class="metric nsd">ns=1</span></td><td>This theorem states that the equivalence `boxIxEquiv d n` is compatible with `boxIndexInv d n` at the level of underlying values: for any element `v` of the box `box d n`, the underlying value of `boxIxEquiv d n v` (viewed as an element of the index type) equals `boxIndexInv d n v.val` applied to the underlying natural number of `v`.</td></tr>
+<tr data-category="Key Lemma"><td>16</td><td><code>theorem</code></td><td><span style="background:#d6eaf8;color:#1a3c6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Key Lemma</span></td><td><a href="#obj-boxIxEquiv_symm_val">Inverse Equivalence Matches Box Index Function <code>boxIxEquiv_symm_val</code></a></td><td>2</td><td>1 <span class="metric nsd">ns=1</span></td><td>The inverse of the equivalence `boxIxEquiv d n` between `Fin (n^d)` and `Fin n ^ d` (tuples of `d` indices each in `Fin n`), when applied to an element `i : Fin (n^d)`, produces a tuple whose underlying value equals `boxIndex d n i.val`.</td></tr>
+<tr data-category="Central Result"><td>17</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-symBox_disjoint_sdiff">Symmetric Box Disjoint from Complement Difference <code>symBox_disjoint_sdiff</code></a></td><td>2</td><td>2 <span class="metric nsd">ns=2</span></td><td>This theorem states that the symmetric box of radius $k$ is disjoint from the set difference $\text{symBox}(d, N) \setminus \text{symBox}(d, k+r)$.</td></tr>
+<tr data-category="Central Result"><td>18</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-fintype_card_pattern_eq">Cardinality of Pattern Type over Box Shape <code>fintype_card_pattern_eq</code></a></td><td>3</td><td>2 <span class="metric nsd">ns=1</span></td><td>This theorem states that the number of patterns of type `α` over a `d`-dimensional box of side length `n` equals `|α|^(n^d)`.</td></tr>
+<tr data-category="Central Result"><td>19</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-boxIndex_boxIndexInv">Box Index Left Inverse <code>boxIndex_boxIndexInv</code></a></td><td>3</td><td>1 <span class="metric nsd">ns=1</span></td><td>This theorem states that `boxIndexInv` is a left inverse to `boxIndex` on the lattice box: given a lattice point `w` in the box `box d n`, converting it to a natural number index via `boxIndex` and then back to a lattice point via `boxIndexInv` recovers the original point `w`.</td></tr>
+<tr data-category="Central Result"><td>20</td><td><code>theorem</code></td><td><span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span></td><td><a href="#obj-boxIndexInv_boxIndex">Box Index Round-Trip Identity <code>boxIndexInv_boxIndex</code></a></td><td>3</td><td>2 <span class="metric nsd">ns=1</span></td><td>This theorem states that `boxIndexInv` is a left inverse of `boxIndex`: starting with any index `i` in `Fin(n^d)`, encoding it as a multi-index via `boxIndex` and then decoding back via `boxIndexInv` recovers the original value `i.val`.</td></tr>
+</tbody></table>
+</section>
+<section id="objects">
+<h2>Objects (Dependency Order)</h2>
+<div id="obj-box_card" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">1</div>
+    <div class="object-title">
+      <h3>Cardinality of Combinatorial Box <code>box_card</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 24&ndash;26
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=0</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=1</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the number of elements in the combinatorial box `box d n` equals $n^d$.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem box_card (d n : ℕ) : (box d n).card = n ^ d</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the number of elements in the combinatorial box <code>box d n</code> equals $n^d$. The box here represents the set of all $d$-tuples (or functions from a $d$-element index set) with entries drawn from ${0, 1, \ldots, n-1}$, so the count $n^d$ is the expected product formula for such a Cartesian product structure.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-box_mono" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">2</div>
+    <div class="object-title">
+      <h3>Monotonicity of Box in Upper Bound <code>box_mono</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 27&ndash;29
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=0</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the combinatorial box of dimension `d` with upper bound `m` is a subset of the box with upper bound `n`, whenever `m ≤ n`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem box_mono {d m n : ℕ} (hmn : m ≤ n) : box d m ⊆ box d n</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the combinatorial box of dimension <code>d</code> with upper bound <code>m</code> is a subset of the box with upper bound <code>n</code>, whenever <code>m ≤ n</code>. In other words, the box construction is monotone with respect to its size parameter.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-box_zero" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">3</div>
+    <div class="object-title">
+      <h3>Empty Box at Zero Radius <code>box_zero</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 30&ndash;36
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=0</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=0</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the combinatorial box of dimension $d$ (with $d &gt; 0$) at radius $0$ is the empty set.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem box_zero {d : ℕ} (hd : 0 &lt; d) : box d 0 = ∅</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the combinatorial box of dimension $d$ (with $d &gt; 0$) at radius $0$ is the empty set. In other words, when the size parameter is zero, there are no valid configurations in the box, provided the dimension is positive.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxFnEquiv" class="object-card" data-category="Central Concept">
+  <div class="object-header">
+    <div class="object-num">4</div>
+    <div class="object-title">
+      <h3>Bijection Between Box Subtype and Finite Functions <code>boxFnEquiv</code></h3>
+      <span class="object-meta">
+        <span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span>&ensp;<code class="kind">def</code>
+        &mdash; lines 37&ndash;67
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=0</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=4</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This is a computable equivalence (bijection) between the subtype of vectors belonging to the combinatorial &quot;box&quot; `box d n` and the type of functions `Fin d → Fin n`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>def boxFnEquiv (d n : ℕ) : ↥(box d n) ≃ (Fin d → Fin n) where
+  toFun v</code></pre>
+  </details>
+  <div class="description"><p>This is a computable equivalence (bijection) between the subtype of vectors belonging to the combinatorial "box" <code>box d n</code> and the type of functions <code>Fin d → Fin n</code>. Concretely, it identifies each element of the box — a vector of <code>d</code> natural numbers each bounded by <code>n</code> — with a <code>d</code>-tuple of elements of <code>Fin n</code>, i.e., a function from <code>{0, …, d−1}</code> to <code>{0, …, n−1}</code>.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-boxIxEquiv"><code>boxIxEquiv</code></a>, <a href="#obj-boxIxEquiv_val"><code>boxIxEquiv_val</code></a>, <a href="#obj-boxIxEquiv_symm_val"><code>boxIxEquiv_symm_val</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxIndex" class="object-card" data-category="Central Concept">
+  <div class="object-header">
+    <div class="object-num">5</div>
+    <div class="object-title">
+      <h3>Base-n Digit Enumeration of Lattice Points <code>boxIndex</code></h3>
+      <span class="object-meta">
+        <span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span>&ensp;<code class="kind">def</code>
+        &mdash; lines 85&ndash;87
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=0</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=1</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This definition maps a natural number index `i` to the `i`-th lattice point in the `d`-dimensional box `{0, 1, ..., n-1}^d`, using the standard base-`n` positional numeral system.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>def boxIndex (d n i : ℕ) : Lat d</code></pre>
+  </details>
+  <div class="description"><p>This definition maps a natural number index <code>i</code> to the <code>i</code>-th lattice point in the <code>d</code>-dimensional box <code>{0, 1, ..., n-1}^d</code>, using the standard base-<code>n</code> positional numeral system. Concretely, the <code>k</code>-th coordinate of the output is the <code>k</code>-th digit in the base-<code>n</code> representation of <code>i</code>, i.e., <code>⌊i / n^k⌋ mod n</code>. The result lives in <code>Lat d</code>, the type of <code>d</code>-tuples of natural numbers.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-boxIndex_mem"><code>boxIndex_mem</code></a>, <a href="#obj-boxIxEquiv_symm_val"><code>boxIxEquiv_symm_val</code></a>, <a href="#obj-boxIndex_boxIndexInv"><code>boxIndex_boxIndexInv</code></a>, <a href="#obj-boxIndexInv_boxIndex"><code>boxIndexInv_boxIndex</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxIndexInv" class="object-card" data-category="Central Concept">
+  <div class="object-header">
+    <div class="object-num">6</div>
+    <div class="object-title">
+      <h3>Lattice point to base-n index <code>boxIndexInv</code></h3>
+      <span class="object-meta">
+        <span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span>&ensp;<code class="kind">def</code>
+        &mdash; lines 103&ndash;106
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=0</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=2</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This function converts a lattice point `w` in the `d`-dimensional box (whose coordinates range in `{0, ..., n-1}`) to its corresponding index in `{0, ..., n^d - 1}` by interpreting the coordinates as a base-`n` number.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>def boxIndexInv (d n : ℕ) (w : Lat d) : ℕ</code></pre>
+  </details>
+  <div class="description"><p>This function converts a lattice point <code>w</code> in the <code>d</code>-dimensional box (whose coordinates range in <code>{0, ..., n-1}</code>) to its corresponding index in <code>{0, ..., n^d - 1}</code> by interpreting the coordinates as a base-<code>n</code> number. It is the inverse of the map that converts a natural number index back to a lattice point, providing a bijection between the box and <code>Fin (n^d)</code>.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-boxIxEquiv_val"><code>boxIxEquiv_val</code></a>, <a href="#obj-boxIndex_boxIndexInv"><code>boxIndex_boxIndexInv</code></a>, <a href="#obj-boxIndexInv_boxIndex"><code>boxIndexInv_boxIndex</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-symBox" class="object-card" data-category="Central Concept">
+  <div class="object-header">
+    <div class="object-num">7</div>
+    <div class="object-title">
+      <h3>Symmetric Integer Box in d Dimensions <code>symBox</code></h3>
+      <span class="object-meta">
+        <span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span>&ensp;<code class="kind">def</code>
+        &mdash; lines 143&ndash;146
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=0</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This is a definition of the symmetric box $Q_n = \{-n, \ldots, n\}^d \subseteq \mathbb{Z}^d$, which is the $d$-fold Cartesian product of the integer interval $[-n, n]$ with itself.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>def symBox (d n : ℕ) : Finset (Lat d)</code></pre>
+  </details>
+  <div class="description"><p>This is a definition of the symmetric box $Q_n = {-n, \ldots, n}^d \subseteq \mathbb{Z}^d$, which is the $d$-fold Cartesian product of the integer interval $[-n, n]$ with itself. It returns a finite set (<code>Finset</code>) of lattice points in $\mathbb{Z}^d$, parameterized by the dimension $d$ and the half-width $n$.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-boxIndexInv_boxIndex"><code>boxIndexInv_boxIndex</code></a>, <a href="#obj-symBox_card"><code>symBox_card</code></a>, <a href="#obj-symBox_mono"><code>symBox_mono</code></a>, <a href="#obj-box_subset_symBox"><code>box_subset_symBox</code></a>, <a href="#obj-symBox_disjoint_sdiff"><code>symBox_disjoint_sdiff</code></a>, <a href="#obj-Lat-supNorm_sub_ge_of_inner_outer"><code>Lat.supNorm_sub_ge_of_inner_outer</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxIxEquiv" class="object-card" data-category="Central Concept">
+  <div class="object-header">
+    <div class="object-num">8</div>
+    <div class="object-title">
+      <h3>Box-to-Fin Power Equivalence <code>boxIxEquiv</code></h3>
+      <span class="object-meta">
+        <span style="background:#f3e5f5;color:#5c1a6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Concept</span>&ensp;<code class="kind">def</code>
+        &mdash; lines 68&ndash;72
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=1</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=0</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This definition constructs an explicit bijection between the elements of the combinatorial box `box d n` (the set of functions from `Fin d` to `Fin n`, representing $d$-tuples of elements from $\{0,\ldots,n-1\}$) and the finite type `Fin (n^d)`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>def boxIxEquiv (d n : ℕ) : ↥(box d n) ≃ Fin (n^d)</code></pre>
+  </details>
+  <div class="description"><p>This definition constructs an explicit bijection between the elements of the combinatorial box <code>box d n</code> (the set of functions from <code>Fin d</code> to <code>Fin n</code>, representing $d$-tuples of elements from ${0,\ldots,n-1}$) and the finite type <code>Fin (n^d)</code>. The equivalence is realized via base-$n$ digit composition: a $d$-tuple of digits in base $n$ is identified with the corresponding number in ${0, \ldots, n^d - 1}$, using the existing <code>finFunctionFinEquiv</code> machinery.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-patternFnEquiv"><code>patternFnEquiv</code></a>, <a href="#obj-boxIxEquiv_val"><code>boxIxEquiv_val</code></a>, <a href="#obj-boxIxEquiv_symm_val"><code>boxIxEquiv_symm_val</code></a>, <a href="#obj-boxIndex_boxIndexInv"><code>boxIndex_boxIndexInv</code></a>, <a href="#obj-boxIndexInv_boxIndex"><code>boxIndexInv_boxIndex</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxIndex_mem" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">9</div>
+    <div class="object-title">
+      <h3>Box Index Membership <code>boxIndex_mem</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 88&ndash;102
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=1</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=5</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that for any natural numbers $d$, $n$, and $i$ with $i &lt; n^d$, the tuple `boxIndex d n i` (which decodes the integer $i$ into a $d$-dimensional multi-index via mixed-radix representation in base $n$) is a member of the box $\{0, 1, \ldots, n-1\}^d$.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem boxIndex_mem {d n i : ℕ} (hi : i &lt; n ^ d) : boxIndex d n i ∈ box d n</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that for any natural numbers $d$, $n$, and $i$ with $i &lt; n^d$, the tuple <code>boxIndex d n i</code> (which decodes the integer $i$ into a $d$-dimensional multi-index via mixed-radix representation in base $n$) is a member of the box ${0, 1, \ldots, n-1}^d$. In other words, the decoding map from ${0, \ldots, n^d - 1}$ into the $d$-fold Cartesian product of ${0, \ldots, n-1}$ lands in the correct box.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-symBox_card" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">10</div>
+    <div class="object-title">
+      <h3>Cardinality of Symmetric Box <code>symBox_card</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 147&ndash;154
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=1</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the symmetric box in dimension $d$ with parameter $n$ has exactly $(2n+1)^d$ elements.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem symBox_card (d n : ℕ) : (symBox d n).card = (2 * n + 1) ^ d</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the symmetric box in dimension $d$ with parameter $n$ has exactly $(2n+1)^d$ elements. The symmetric box is the discrete hypercube ${-n, \ldots, n}^d$ (or an analogous symmetric finite lattice region in $\mathbb{Z}^d$), and its cardinality is the $d$-fold product of the size $2n+1$ of each coordinate interval.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-symBox_mono" class="object-card" data-category="Technical Lemma">
+  <div class="object-header">
+    <div class="object-num">11</div>
+    <div class="object-title">
+      <h3>Monotonicity of Symmetric Box <code>symBox_mono</code></h3>
+      <span class="object-meta">
+        <span style="background:#fef3e2;color:#7d4e1e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Technical Lemma</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 155&ndash;159
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=1</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the symmetric box of dimension `d` and size `m` is contained in the symmetric box of dimension `d` and size `n`, whenever `m ≤ n`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem symBox_mono {d m n : ℕ} (hmn : m ≤ n) : symBox d m ⊆ symBox d n</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the symmetric box of dimension <code>d</code> and size <code>m</code> is contained in the symmetric box of dimension <code>d</code> and size <code>n</code>, whenever <code>m ≤ n</code>. In other words, the symmetric box construction is monotone with respect to its size parameter.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-symBox_disjoint_sdiff"><code>symBox_disjoint_sdiff</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-box_subset_symBox" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">12</div>
+    <div class="object-title">
+      <h3>Box Contained in Symmetric Box <code>box_subset_symBox</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 160&ndash;170
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=1</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=3</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the box of side length `n+1` in dimension `d` is a subset of the symmetric box of dimension `d` with parameter `n`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem box_subset_symBox {d n : ℕ} : box d (n + 1) ⊆ symBox d n</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the box of side length <code>n+1</code> in dimension <code>d</code> is a subset of the symmetric box of dimension <code>d</code> with parameter <code>n</code>. It establishes a containment relationship between two combinatorial/geometric regions, asserting that every lattice point (or multi-index) lying in the standard box fits within the corresponding symmetric box.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-Lat-supNorm_sub_ge_of_inner_outer" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">13</div>
+    <div class="object-title">
+      <h3>Sup-norm lower bound for inner-outer box separation <code>Lat.supNorm_sub_ge_of_inner_outer</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 178&ndash;213
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=1</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=9</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=2</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that if `u` lies in the symmetric box `Q_k` (the lattice points with sup-norm at most `k`) and `v` lies in the larger symmetric box `Q_N` but outside `Q_{k+r}`, then the sup-norm distance between `v` and `u` is at least `r + 1`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem Lat.supNorm_sub_ge_of_inner_outer {d k r N : ℕ}
+    (u v : Lat d) (hu : u ∈ symBox d k) (hv : v ∈ symBox d N \ symBox d (k + r)) :
+    (r + 1 : ℤ) ≤ Lat.supNorm (v - u)</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that if <code>u</code> lies in the symmetric box <code>Q_k</code> (the lattice points with sup-norm at most <code>k</code>) and <code>v</code> lies in the larger symmetric box <code>Q_N</code> but outside <code>Q_{k+r}</code>, then the sup-norm distance between <code>v</code> and <code>u</code> is at least <code>r + 1</code>. Geometrically, any point outside the "shell" boundary <code>Q_{k+r}</code> must be far from any point inside <code>Q_k</code> by at least <code>r + 1</code> in the ℓ^∞ metric, since the boxes are nested and differ in radius by <code>r</code>.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-patternFnEquiv" class="object-card" data-category="Technical Definition">
+  <div class="object-header">
+    <div class="object-num">14</div>
+    <div class="object-title">
+      <h3>Pattern-to-Function Equivalence for Boxes <code>patternFnEquiv</code></h3>
+      <span class="object-meta">
+        <span style="background:#f2f2f2;color:#444444;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Technical Definition</span>&ensp;<code class="kind">def</code>
+        &mdash; lines 73&ndash;76
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=2</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This definition establishes an equivalence between patterns of type `α` indexed by the box `box d n` (a `d`-dimensional hypercubic grid of side length `n`) and functions from `Fin (n^d)` to `α`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>def patternFnEquiv (α : Type*) (d n : ℕ) : Pattern α (box d n) ≃ (Fin (n^d) → α)</code></pre>
+  </details>
+  <div class="description"><p>This definition establishes an equivalence between patterns of type <code>α</code> indexed by the box <code>box d n</code> (a <code>d</code>-dimensional hypercubic grid of side length <code>n</code>) and functions from <code>Fin (n^d)</code> to <code>α</code>. Since the box has exactly <code>n^d</code> elements (a <code>d</code>-fold Cartesian product of <code>{0, …, n−1}</code>), the two types are naturally in bijection, and this equivalence makes that correspondence explicit in a form convenient for transferring computability and decidability arguments between the dependent pattern type and the simpler uniform function type.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-fintype_card_pattern_eq"><code>fintype_card_pattern_eq</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxIxEquiv_val" class="object-card" data-category="Key Lemma">
+  <div class="object-header">
+    <div class="object-num">15</div>
+    <div class="object-title">
+      <h3>Box Index Equivalence Value Compatibility <code>boxIxEquiv_val</code></h3>
+      <span class="object-meta">
+        <span style="background:#d6eaf8;color:#1a3c6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Key Lemma</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 107&ndash;113
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=2</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the equivalence `boxIxEquiv d n` is compatible with `boxIndexInv d n` at the level of underlying values: for any element `v` of the box `box d n`, the underlying value of `boxIxEquiv d n v` (viewed as an element of the index type) equals `boxIndexInv d n v.val` applied to the underlying natural number of `v`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem boxIxEquiv_val (d n : ℕ) (v : ↥(box d n)) :
+    (boxIxEquiv d n v).val = boxIndexInv d n v.val</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the equivalence <code>boxIxEquiv d n</code> is compatible with <code>boxIndexInv d n</code> at the level of underlying values: for any element <code>v</code> of the box <code>box d n</code>, the underlying value of <code>boxIxEquiv d n v</code> (viewed as an element of the index type) equals <code>boxIndexInv d n v.val</code> applied to the underlying natural number of <code>v</code>.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-boxIndex_boxIndexInv"><code>boxIndex_boxIndexInv</code></a>, <a href="#obj-boxIndexInv_boxIndex"><code>boxIndexInv_boxIndex</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxIxEquiv_symm_val" class="object-card" data-category="Key Lemma">
+  <div class="object-header">
+    <div class="object-num">16</div>
+    <div class="object-title">
+      <h3>Inverse Equivalence Matches Box Index Function <code>boxIxEquiv_symm_val</code></h3>
+      <span class="object-meta">
+        <span style="background:#d6eaf8;color:#1a3c6e;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Key Lemma</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 114&ndash;120
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=2</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=1</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">The inverse of the equivalence `boxIxEquiv d n` between `Fin (n^d)` and `Fin n ^ d` (tuples of `d` indices each in `Fin n`), when applied to an element `i : Fin (n^d)`, produces a tuple whose underlying value equals `boxIndex d n i.val`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem boxIxEquiv_symm_val (d n : ℕ) (i : Fin (n^d)) :
+    ((boxIxEquiv d n).symm i).val = boxIndex d n i.val</code></pre>
+  </details>
+  <div class="description"><p>The inverse of the equivalence <code>boxIxEquiv d n</code> between <code>Fin (n^d)</code> and <code>Fin n ^ d</code> (tuples of <code>d</code> indices each in <code>Fin n</code>), when applied to an element <code>i : Fin (n^d)</code>, produces a tuple whose underlying value equals <code>boxIndex d n i.val</code>. In other words, the two ways of converting a flat index into a multi-index—via the inverse equivalence and via the explicit <a href="#obj-boxIndex"><code>boxIndex</code></a> function—agree on the underlying data.</p></div>
+  
+  <div class="used-by"><strong>Used by:</strong> <a href="#obj-boxIndex_boxIndexInv"><code>boxIndex_boxIndexInv</code></a>, <a href="#obj-boxIndexInv_boxIndex"><code>boxIndexInv_boxIndex</code></a></div>
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-symBox_disjoint_sdiff" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">17</div>
+    <div class="object-title">
+      <h3>Symmetric Box Disjoint from Complement Difference <code>symBox_disjoint_sdiff</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 171&ndash;177
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=2</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=2</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the symmetric box of radius $k$ is disjoint from the set difference $\text{symBox}(d, N) \setminus \text{symBox}(d, k+r)$.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem symBox_disjoint_sdiff {d k r N : ℕ} :
+    Disjoint (symBox d k) (symBox d N \ symBox d (k + r))</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the symmetric box of radius $k$ is disjoint from the set difference $\text{symBox}(d, N) \setminus \text{symBox}(d, k+r)$. In other words, any lattice point within the smaller symmetric box of radius $k$ cannot lie in the larger box of radius $N$ while simultaneously failing to lie in the intermediate box of radius $k+r$, since any point in $\text{symBox}(d,k)$ is automatically contained in $\text{symBox}(d, k+r)$ (as $k \leq k+r$), making the intersection with the complement empty.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-fintype_card_pattern_eq" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">18</div>
+    <div class="object-title">
+      <h3>Cardinality of Pattern Type over Box Shape <code>fintype_card_pattern_eq</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 77&ndash;84
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=3</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that the number of patterns of type `α` over a `d`-dimensional box of side length `n` equals `|α|^(n^d)`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem fintype_card_pattern_eq {α : Type*} [Fintype α] (d n : ℕ) :
+    Fintype.card (Pattern α (box d n)) = (Fintype.card α) ^ (n ^ d)</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that the number of patterns of type <code>α</code> over a <code>d</code>-dimensional box of side length <code>n</code> equals <code>|α|^(n^d)</code>. This makes sense because the box <code>box d n</code> is a finite index set of cardinality <code>n^d</code>, so a pattern (an assignment of values in <code>α</code> to each position in the box) is essentially a function from an <code>n^d</code>-element set to <code>α</code>, and the number of such functions is <code>|α|^(n^d)</code>.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxIndex_boxIndexInv" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">19</div>
+    <div class="object-title">
+      <h3>Box Index Left Inverse <code>boxIndex_boxIndexInv</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 121&ndash;130
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=3</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=1</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that `boxIndexInv` is a left inverse to `boxIndex` on the lattice box: given a lattice point `w` in the box `box d n`, converting it to a natural number index via `boxIndex` and then back to a lattice point via `boxIndexInv` recovers the original point `w`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem boxIndex_boxIndexInv {d n : ℕ} {w : Lat d} (hw : w ∈ box d n) :
+    boxIndex d n (boxIndexInv d n w) = w</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that <a href="#obj-boxIndexInv"><code>boxIndexInv</code></a> is a left inverse to <a href="#obj-boxIndex"><code>boxIndex</code></a> on the lattice box: given a lattice point <code>w</code> in the box <code>box d n</code>, converting it to a natural number index via <a href="#obj-boxIndex"><code>boxIndex</code></a> and then back to a lattice point via <a href="#obj-boxIndexInv"><code>boxIndexInv</code></a> recovers the original point <code>w</code>. In other words, <a href="#obj-boxIndex"><code>boxIndex</code></a> and <a href="#obj-boxIndexInv"><code>boxIndexInv</code></a> form a round-trip (retraction) on the elements of <code>box d n</code>.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+<div id="obj-boxIndexInv_boxIndex" class="object-card" data-category="Central Result">
+  <div class="object-header">
+    <div class="object-num">20</div>
+    <div class="object-title">
+      <h3>Box Index Round-Trip Identity <code>boxIndexInv_boxIndex</code></h3>
+      <span class="object-meta">
+        <span style="background:#d8f3dc;color:#1a5c2a;padding:2px 8px;border-radius:3px;font-size:0.85em;font-weight:bold">Central Result</span>&ensp;<code class="kind">theorem</code>
+        &mdash; lines 131&ndash;142
+        <span class="metric depth" title="In-file dependency depth — longest chain of local deps ending here">d=3</span><span class="metric refs" title="Distinct external (namespaced) identifiers referenced — proxy for mathlib reliance">ext=2</span><span class="metric nsd" title="Max namespace depth among external refs (dots in qualified names)">ns=1</span>
+      </span>
+    </div>
+  </div>
+  <p class="one-liner">This theorem states that `boxIndexInv` is a left inverse of `boxIndex`: starting with any index `i` in `Fin(n^d)`, encoding it as a multi-index via `boxIndex` and then decoding back via `boxIndexInv` recovers the original value `i.val`.</p>
+  <details class="sig">
+    <summary>View signature</summary>
+    <pre><code>theorem boxIndexInv_boxIndex {d n : ℕ} (i : Fin (n^d)) :
+    boxIndexInv d n (boxIndex d n i.val) = i.val</code></pre>
+  </details>
+  <div class="description"><p>This theorem states that <a href="#obj-boxIndexInv"><code>boxIndexInv</code></a> is a left inverse of <a href="#obj-boxIndex"><code>boxIndex</code></a>: starting with any index <code>i</code> in <code>Fin(n^d)</code>, encoding it as a multi-index via <a href="#obj-boxIndex"><code>boxIndex</code></a> and then decoding back via <a href="#obj-boxIndexInv"><code>boxIndexInv</code></a> recovers the original value <code>i.val</code>. In other words, the mapping from flat indices to box (multi-)indices is injective, with <a href="#obj-boxIndexInv"><code>boxIndexInv</code></a> undoing it.</p></div>
+  
+  
+  <div class="back-to-top"><a href="#top">&#8593; Top</a></div>
+</div>
+</section>
+</main>
+
+<script>
+(() => {
+  const checks = document.querySelectorAll('.cat-toggle input[type=checkbox]');
+  if (!checks.length) return;
+
+  const apply = () => {
+    const active = new Set();
+    checks.forEach(c => { if (c.checked) active.add(c.dataset.cat); });
+
+    document.querySelectorAll('[data-category]').forEach(el => {
+      const cat = el.dataset.category || 'Other';
+      el.classList.toggle('filtered-out', !active.has(cat));
+    });
+  };
+
+  checks.forEach(c => c.addEventListener('change', apply));
+
+  const allBtn = document.getElementById('cat-all');
+  const noneBtn = document.getElementById('cat-none');
+  if (allBtn) allBtn.addEventListener('click', e => {
+    e.preventDefault();
+    checks.forEach(c => { c.checked = true; });
+    apply();
+  });
+  if (noneBtn) noneBtn.addEventListener('click', e => {
+    e.preventDefault();
+    checks.forEach(c => { c.checked = false; });
+    apply();
+  });
+
+  // Smooth-scroll for graph SVG node anchors.
+  document.querySelectorAll('.graph-embed a').forEach(a => {
+    const href = a.getAttribute('xlink:href') || a.getAttribute('href');
+    if (!href || !href.startsWith('#')) return;
+    a.addEventListener('click', evt => {
+      const target = document.getElementById(href.slice(1));
+      if (target) {
+        evt.preventDefault();
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        target.classList.add('flash');
+        setTimeout(() => target.classList.remove('flash'), 1200);
+      }
+    });
+  });
+})();
+</script>
+<style>
+.object-card.flash { box-shadow: 0 0 0 3px rgba(0, 85, 204, 0.35); transition: box-shadow 0.3s; }
+</style>
+</body>
+</html>

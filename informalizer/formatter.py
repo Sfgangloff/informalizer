@@ -499,6 +499,168 @@ details.sig summary:hover { text-decoration: underline; }
 .back-to-top a:hover { color: #0055cc; text-decoration: none; }
 """
 
+_HTML_FILTER_CSS = """
+/* Toolbar + filter UI */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  margin: 1rem 0 0.5rem;
+  background: #f8f9fa;
+  border: 1px solid #e0e4e8;
+  border-radius: 6px;
+  font-size: 0.86rem;
+}
+.toolbar label.cat-toggle {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  user-select: none;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  transition: background 0.1s;
+}
+.toolbar label.cat-toggle:hover { background: #e9ecef; }
+.toolbar .cat-toggle input { margin: 0; }
+.toolbar .cat-toggle.disabled { opacity: 0.4; }
+.toolbar .toolbar-btn {
+  cursor: pointer;
+  font-size: 0.82rem;
+  color: #0055cc;
+  background: none;
+  border: none;
+  padding: 0.1rem 0.3rem;
+}
+.toolbar .toolbar-btn:hover { text-decoration: underline; }
+.toolbar .toolbar-sep { color: #adb5bd; }
+
+/* Depth/refs chips */
+.metric {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  background: #eef2f5;
+  color: #495057;
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+.metric.depth { background: #e6f3ff; color: #1a4a8e; }
+.metric.refs  { background: #fef3e2; color: #7d4e1e; }
+.metric.nsd   { background: #f3e5f5; color: #5c1a6e; }
+
+/* Dependency graph embed */
+.graph-embed {
+  border: 1px solid #e0e4e8;
+  border-radius: 6px;
+  padding: 0.5rem;
+  background: #fff;
+  overflow-x: auto;
+  text-align: center;
+}
+.graph-embed svg { max-width: 100%; height: auto; }
+.graph-embed .g-note {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-bottom: 0.4rem;
+}
+.graph-embed g.node:hover ellipse,
+.graph-embed g.node:hover polygon,
+.graph-embed g.node:hover path,
+.graph-embed g.node:hover rect {
+  stroke: #0055cc;
+  stroke-width: 2;
+}
+.graph-embed g.node a { cursor: pointer; }
+
+/* Filter-hidden rows / cards */
+.ref-table tr.filtered-out,
+.object-card.filtered-out { display: none; }
+
+/* Summary illustrations */
+.summary-visuals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0 1.5rem;
+}
+.summary-visuals figure {
+  margin: 0;
+  border: 1px solid #e0e4e8;
+  border-radius: 6px;
+  padding: 0.75rem;
+  background: #fff;
+  text-align: center;
+}
+.summary-visuals figure svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+.summary-visuals figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #495057;
+  font-style: italic;
+}
+"""
+
+_HTML_FILTER_JS = r"""
+<script>
+(() => {
+  const checks = document.querySelectorAll('.cat-toggle input[type=checkbox]');
+  if (!checks.length) return;
+
+  const apply = () => {
+    const active = new Set();
+    checks.forEach(c => { if (c.checked) active.add(c.dataset.cat); });
+
+    document.querySelectorAll('[data-category]').forEach(el => {
+      const cat = el.dataset.category || 'Other';
+      el.classList.toggle('filtered-out', !active.has(cat));
+    });
+  };
+
+  checks.forEach(c => c.addEventListener('change', apply));
+
+  const allBtn = document.getElementById('cat-all');
+  const noneBtn = document.getElementById('cat-none');
+  if (allBtn) allBtn.addEventListener('click', e => {
+    e.preventDefault();
+    checks.forEach(c => { c.checked = true; });
+    apply();
+  });
+  if (noneBtn) noneBtn.addEventListener('click', e => {
+    e.preventDefault();
+    checks.forEach(c => { c.checked = false; });
+    apply();
+  });
+
+  // Smooth-scroll for graph SVG node anchors.
+  document.querySelectorAll('.graph-embed a').forEach(a => {
+    const href = a.getAttribute('xlink:href') || a.getAttribute('href');
+    if (!href || !href.startsWith('#')) return;
+    a.addEventListener('click', evt => {
+      const target = document.getElementById(href.slice(1));
+      if (target) {
+        evt.preventDefault();
+        target.scrollIntoView({behavior: 'smooth', block: 'start'});
+        target.classList.add('flash');
+        setTimeout(() => target.classList.remove('flash'), 1200);
+      }
+    });
+  });
+})();
+</script>
+<style>
+.object-card.flash { box-shadow: 0 0 0 3px rgba(0, 85, 204, 0.35); transition: box-shadow 0.3s; }
+</style>
+"""
+
 _HTML_MATHJAX = """
 <script>
 MathJax = {
@@ -513,10 +675,52 @@ MathJax = {
 """
 
 
+
 def _render_md(text: str, name_to_href: dict[str, str]) -> str:
     """Link object names then convert Markdown to HTML."""
     linked = _add_object_links(text, name_to_href)
     return _md.markdown(linked, extensions=["fenced_code", "tables"])
+
+
+def _import_summary(filepath: str) -> dict:
+    """Cheap parse of the import block: number of Mathlib imports and the
+    deepest namespace depth among them. Used for the file-level Mathlib
+    reliance overview shown in the toolbar."""
+    try:
+        text = Path(filepath).read_text(encoding="utf-8")
+    except OSError:
+        return {"mathlib_imports": 0, "max_import_depth": 0, "other_imports": 0}
+    mathlib = 0
+    other = 0
+    max_depth = 0
+    for line in text.splitlines():
+        m = re.match(r"\s*import\s+([\w.]+)", line)
+        if not m:
+            continue
+        mod = m.group(1)
+        if mod.startswith("Mathlib."):
+            mathlib += 1
+            # depth = number of components after "Mathlib"
+            depth = mod.count(".")
+            max_depth = max(max_depth, depth)
+        else:
+            other += 1
+    return {
+        "mathlib_imports": mathlib,
+        "other_imports": other,
+        "max_import_depth": max_depth,
+    }
+
+
+def _sanitize_svg(svg: str) -> str:
+    """Strip out anything dangerous from a model-generated SVG: <script>, on*
+    event handlers, and javascript: URLs. Inline SVGs from the model run in
+    the same origin as the report, so we can't trust them blindly."""
+    cleaned = re.sub(r"<script\b[^>]*>.*?</script>", "", svg, flags=re.DOTALL | re.IGNORECASE)
+    cleaned = re.sub(r"\son[a-z]+\s*=\s*\"[^\"]*\"", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\son[a-z]+\s*=\s*'[^']*'", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"javascript:", "blocked:", cleaned, flags=re.IGNORECASE)
+    return cleaned
 
 
 def write_html(
@@ -529,11 +733,18 @@ def write_html(
     categories: dict[str, str] | None = None,
     deps: dict[str, set[str]] | None = None,
     examples: dict[str, str] | None = None,
+    in_file_depths: dict[str, int] | None = None,
+    external_metrics: dict[str, dict] | None = None,
+    svg_graph: str | None = None,
+    illustrations: list[tuple[str, str]] | None = None,
 ) -> None:
     natural_names = natural_names or {}
     categories = categories or {}
     deps = deps or {}
     examples = examples or {}
+    in_file_depths = in_file_depths or {}
+    external_metrics = external_metrics or {}
+    illustrations = illustrations or []
 
     used_by = _build_used_by(ordered_objects, deps)
 
@@ -543,6 +754,31 @@ def write_html(
 
     summary_text = _strip_summary_heading(summary)
     summary_html = _render_md(summary_text, name_to_href)
+
+    imp = _import_summary(filepath)
+    present_cats = sorted({categories.get(o.name, "Other") for o in ordered_objects})
+
+    def _metric_chips(name: str) -> str:
+        chips = []
+        if name in in_file_depths:
+            chips.append(
+                f'<span class="metric depth" title="In-file dependency depth — '
+                f'longest chain of local deps ending here">d={in_file_depths[name]}</span>'
+            )
+        em = external_metrics.get(name)
+        if em:
+            chips.append(
+                f'<span class="metric refs" title="Distinct external (namespaced) '
+                f'identifiers referenced — proxy for mathlib reliance">'
+                f'ext={em["ext_refs"]}</span>'
+            )
+            if em["ns_depth"]:
+                chips.append(
+                    f'<span class="metric nsd" title="Max namespace depth among '
+                    f'external refs (dots in qualified names)">'
+                    f'ns={em["ns_depth"]}</span>'
+                )
+        return "".join(chips)
 
     parts: list[str] = []
 
@@ -554,7 +790,7 @@ def write_html(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Informalizer Report: {html.escape(filename)}</title>
   {_HTML_MATHJAX}
-  <style>{_HTML_CSS}</style>
+  <style>{_HTML_CSS}{_HTML_FILTER_CSS}</style>
 </head>
 <body>
 """)
@@ -562,22 +798,78 @@ def write_html(
     # ---- header ----
     parts.append(f"""<header id="top" class="site-header">
   <h1>Informalizer Report: <code>{html.escape(filename)}</code></h1>
-  <p class="meta">Generated on {today}</p>
+  <p class="meta">Generated on {today}
+     &middot; {imp["mathlib_imports"]} Mathlib imports
+     (max namespace depth {imp["max_import_depth"]})
+     &middot; {imp["other_imports"]} other imports</p>
 </header>
 <main>
 """)
 
     # ---- summary ----
-    parts.append(f'<section id="summary">\n<h2>Summary</h2>\n{summary_html}\n</section>\n')
+    parts.append(f'<section id="summary">\n<h2>Summary</h2>\n{summary_html}\n')
 
-    # ---- quick reference ----
+    # ---- summary illustrations (TikZ-compiled SVGs from the model) ----
+    if illustrations:
+        parts.append('<div class="summary-visuals">\n')
+        for caption, svg in illustrations:
+            safe_svg = _sanitize_svg(svg)
+            cap_html = html.escape(caption) if caption else ""
+            parts.append(
+                f'<figure>{safe_svg}'
+                + (f'<figcaption>{cap_html}</figcaption>' if cap_html else '')
+                + '</figure>\n'
+            )
+        parts.append('</div>\n')
+
+    parts.append('</section>\n')
+
+    # ---- dependency graph (inline SVG) ----
+    if svg_graph:
+        parts.append(
+            '<section id="dependency-graph">\n'
+            '<h2>Dependency Graph</h2>\n'
+            '<div class="graph-embed">\n'
+            '<div class="g-note">Click any node to jump to its description.</div>\n'
+            f'{svg_graph}\n'
+            '</div>\n</section>\n'
+        )
+
+    # ---- quick reference (toolbar lives inside this section) ----
     parts.append('<section id="quick-reference">\n<h2>Quick Reference</h2>\n')
+
+    if present_cats:
+        toolbar = ['<div class="toolbar" id="cat-toolbar">',
+                   '<strong>Filter:</strong>']
+        for cat in present_cats:
+            fg, bg = _CATEGORY_HTML_COLORS.get(cat, ("#444", "#f2f2f2"))
+            toolbar.append(
+                f'<label class="cat-toggle">'
+                f'<input type="checkbox" data-cat="{html.escape(cat)}" checked>'
+                f'<span class="badge" style="background:{bg};color:{fg}">'
+                f'{html.escape(cat)}</span></label>'
+            )
+        toolbar.append('<span class="toolbar-sep">|</span>')
+        toolbar.append('<button class="toolbar-btn" id="cat-all">all</button>')
+        toolbar.append('<button class="toolbar-btn" id="cat-none">none</button>')
+        toolbar.append(
+            '<span class="toolbar-sep">|</span>'
+            '<span style="color:#6c757d">'
+            '<span class="metric depth">d=N</span> in-file depth · '
+            '<span class="metric refs">ext=N</span> external refs · '
+            '<span class="metric nsd">ns=N</span> namespace depth'
+            '</span>'
+        )
+        toolbar.append('</div>\n')
+        parts.append("".join(toolbar))
+
     parts.append('<table class="ref-table"><thead><tr>'
-                 '<th>#</th><th>Kind</th><th>Category</th><th>Name</th><th>Summary</th>'
+                 '<th>#</th><th>Kind</th><th>Category</th><th>Name</th>'
+                 '<th>Depth</th><th>Ext</th><th>Summary</th>'
                  '</tr></thead><tbody>\n')
 
     for i, obj in enumerate(ordered_objects, 1):
-        cat = categories.get(obj.name, "")
+        cat = categories.get(obj.name, "Other")
         blurb = html.escape(_first_sentence(descriptions.get(obj.name, "")))
         href = name_to_href[obj.name]
         nat = natural_names.get(obj.name, "")
@@ -586,11 +878,19 @@ def write_html(
         else:
             disp_html = f'<code>{html.escape(obj.name)}</code>'
         badge_html = _category_badge(cat) if cat else ""
+        d = in_file_depths.get(obj.name, 0)
+        em = external_metrics.get(obj.name, {"ext_refs": 0, "ns_depth": 0})
+        ext_cell = f'{em["ext_refs"]}'
+        if em["ns_depth"]:
+            ext_cell += f' <span class="metric nsd">ns={em["ns_depth"]}</span>'
         parts.append(
-            f'<tr><td>{i}</td>'
+            f'<tr data-category="{html.escape(cat)}">'
+            f'<td>{i}</td>'
             f'<td><code>{html.escape(obj.kind)}</code></td>'
             f'<td>{badge_html}</td>'
             f'<td><a href="{href}">{disp_html}</a></td>'
+            f'<td>{d}</td>'
+            f'<td>{ext_cell}</td>'
             f'<td>{blurb}</td></tr>\n'
         )
 
@@ -600,7 +900,7 @@ def write_html(
     parts.append('<section id="objects">\n<h2>Objects (Dependency Order)</h2>\n')
 
     for i, obj in enumerate(ordered_objects, 1):
-        cat = categories.get(obj.name, "")
+        cat = categories.get(obj.name, "Other")
         nat = natural_names.get(obj.name, "")
         blurb = html.escape(_first_sentence(descriptions.get(obj.name, "")))
         desc_md = _normalize_description(
@@ -617,8 +917,8 @@ def write_html(
             header_name = f'<code>{html.escape(obj.name)}</code>'
 
         sig_escaped = html.escape(obj.signature)
+        metric_html = _metric_chips(obj.name)
 
-        # Used by
         users = used_by.get(obj.name, [])
         used_by_html = ""
         if users:
@@ -630,7 +930,6 @@ def write_html(
                 f'<div class="used-by"><strong>Used by:</strong> {user_links}</div>'
             )
 
-        # Example
         example_html = ""
         raw_example = examples.get(obj.name, "")
         if raw_example:
@@ -641,7 +940,7 @@ def write_html(
                 '</details>'
             )
 
-        parts.append(f"""<div id="{anchor}" class="object-card">
+        parts.append(f"""<div id="{anchor}" class="object-card" data-category="{html.escape(cat)}">
   <div class="object-header">
     <div class="object-num">{i}</div>
     <div class="object-title">
@@ -649,6 +948,7 @@ def write_html(
       <span class="object-meta">
         {badge_html}&ensp;<code class="kind">{html.escape(obj.kind)}</code>
         &mdash; lines {obj.line_start}&ndash;{obj.line_end}
+        {metric_html}
       </span>
     </div>
   </div>
@@ -664,6 +964,8 @@ def write_html(
 </div>
 """)
 
-    parts.append('</section>\n</main>\n</body>\n</html>\n')
+    parts.append('</section>\n</main>\n')
+    parts.append(_HTML_FILTER_JS)
+    parts.append('</body>\n</html>\n')
 
     Path(output_path).write_text("".join(parts), encoding="utf-8")

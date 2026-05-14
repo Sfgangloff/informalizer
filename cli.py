@@ -15,10 +15,13 @@ from informalizer.dependency_graph import (
     build_dependency_graph,
     topological_sort,
     categorize_objects,
+    compute_in_file_depths,
+    compute_external_metrics,
 )
-from informalizer.api import describe_objects_batch, generate_summary
+from informalizer.api import describe_objects_batch, generate_summary, generate_visualizations
 from informalizer.formatter import print_terminal, write_markdown, write_html
-from informalizer.graph_renderer import render_graph
+from informalizer.graph_renderer import render_graph, render_graph_svg
+from informalizer.tikz_renderer import compile_tikz_to_svg
 from informalizer.knowledge_store import KnowledgeStore, make_uid, VALID_STATES
 from informalizer.diff_finder import find_diff
 from informalizer import corpus as corpus_mod
@@ -70,6 +73,8 @@ def _process_file(
     deps = build_dependency_graph(objects)
     ordered = topological_sort(objects, deps)
     categories = categorize_objects(objects, deps)
+    in_file_depths = compute_in_file_depths(deps)
+    external_metrics = compute_external_metrics(objects)
 
     descriptions, natural_names, examples = describe_objects_batch(
         client, ordered, include_examples=include_examples
@@ -80,10 +85,30 @@ def _process_file(
         print_terminal(str(lean_path), ordered, descriptions, summary,
                        natural_names=natural_names, categories=categories)
     if html:
+        tikz_illustrations = generate_visualizations(
+            client, ordered, descriptions, summary,
+            natural_names=natural_names, categories=categories,
+        )
+        compiled: list[tuple[str, str]] = []
+        for i, (caption, tikz) in enumerate(tikz_illustrations, 1):
+            print(f"  Compiling TikZ illustration {i}/{len(tikz_illustrations)}...",
+                  file=sys.stderr)
+            svg = compile_tikz_to_svg(tikz)
+            if svg:
+                compiled.append((caption, svg))
+            else:
+                print(f"  illustration {i} failed to compile — skipping",
+                      file=sys.stderr)
+
         html_path = output_path.with_suffix(".html")
+        svg_graph = render_graph_svg(ordered, deps, categories=categories)
         write_html(str(lean_path), ordered, descriptions, summary, str(html_path),
                    natural_names=natural_names, categories=categories, deps=deps,
-                   examples=examples)
+                   examples=examples,
+                   in_file_depths=in_file_depths,
+                   external_metrics=external_metrics,
+                   svg_graph=svg_graph,
+                   illustrations=compiled)
         print(f"  Written: {html_path}", file=sys.stderr)
     if markdown:
         md_path = output_path.with_suffix(".md")
