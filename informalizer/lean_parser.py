@@ -58,7 +58,7 @@ def parse_lean_file(filepath: str) -> list[LeanObject]:
             anon_counters[kind] = anon_counters.get(kind, 0) + 1
             name = f"{kind}_{anon_counters[kind]}"
 
-        signature = _extract_signature(raw_text)
+        signature = _extract_signature(raw_text, kind)
         docstring = _extract_docstring(lines, start_i)
 
         objects.append(LeanObject(
@@ -90,16 +90,58 @@ def _extract_name(decl_line: str, kind: str) -> Optional[str]:
     return None
 
 
-def _extract_signature(raw_text: str) -> str:
+_PROOF_KINDS = frozenset({"theorem", "lemma", "example"})
+
+_TRAILING_ATTR_RE = re.compile(r'^\s*@\[.*?\]\s*$')
+_SECTION_COMMENT_RE = re.compile(r'^\s*/-!.*?-/\s*$', re.DOTALL)
+
+
+def _trim_trailing_attrs(text: str) -> str:
+    """Strip trailing content that belongs to the *next* declaration: blank
+    lines, standalone @[...] attribute lines, section comments `/-! ... -/`,
+    and doc comment blocks `/-- ... -/`. The line-based slicer in
+    parse_lean_file glues these onto the previous declaration's raw_text."""
+    # Strip trailing doc / section comment blocks first (they may span many
+    # lines, so we work at the text level before falling back to per-line).
+    pattern = re.compile(
+        r'(?:\s*(?:/--.*?-/|/-!.*?-/))+\s*$',
+        re.DOTALL,
+    )
+    text = pattern.sub('', text)
+    lines = text.split('\n')
+    while lines and (not lines[-1].strip() or _TRAILING_ATTR_RE.match(lines[-1])):
+        lines.pop()
+    return '\n'.join(lines)
+
+
+def _earliest(raw_text: str, delimiters: tuple[str, ...]) -> int:
+    """Return the earliest index at which any of the delimiters occurs, or -1."""
+    best = -1
+    for d in delimiters:
+        idx = raw_text.find(d)
+        if idx != -1 and (best == -1 or idx < best):
+            best = idx
+    return best
+
+
+def _extract_signature(raw_text: str, kind: str) -> str:
     """
-    Everything before the body delimiter: ' := ', ' where', or a trailing
-    ' by' / '\nby'. Falls back to the full raw text if none found.
+    Pull the human-readable signature out of a raw declaration block.
+
+    For theorems / lemmas / examples: stop at the proof — the earliest of
+    ' :=', '\\nby ', '\\n  by '. The statement is what survives.
+
+    For everything else (definitions, structures, instances, …): the body
+    *is* the content the user wants to see, so include it. We just trim
+    trailing standalone @[...] attribute lines that belong to the next
+    declaration.
     """
-    for delimiter in (' :=', ' where', '\nby ', '\n  by '):
-        idx = raw_text.find(delimiter)
+    if kind in _PROOF_KINDS:
+        idx = _earliest(raw_text, (' :=', '\nby ', '\n  by '))
         if idx != -1:
-            return raw_text[:idx].strip()
-    return raw_text.strip()
+            return _trim_trailing_attrs(raw_text[:idx])
+        return _trim_trailing_attrs(raw_text)
+    return _trim_trailing_attrs(raw_text)
 
 
 def _extract_docstring(lines: list[str], decl_line_idx: int) -> Optional[str]:

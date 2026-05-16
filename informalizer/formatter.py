@@ -105,6 +105,28 @@ def _anchor_href(name: str) -> str:
     return "#" + _anchor_id(name)
 
 
+def _fig_anchor_id(n: int) -> str:
+    return f"fig-{n}"
+
+
+def _fig_anchor_href(n: int) -> str:
+    return f"#fig-{n}"
+
+
+_FIGURE_REF_RE = re.compile(r"\(\s*[Ff]igure\s+(\d+)\s*\)")
+
+
+def _link_figure_refs(text: str, valid_numbers: set[int]) -> str:
+    """Turn '(Figure N)' tokens into hyperlinks to the figure anchor.
+    Only links numbers that actually have a figure to point at."""
+    def repl(m: re.Match) -> str:
+        n = int(m.group(1))
+        if n not in valid_numbers:
+            return m.group(0)
+        return f'(<a class="fig-ref" href="{_fig_anchor_href(n)}">Figure {n}</a>)'
+    return _FIGURE_REF_RE.sub(repl, text)
+
+
 def _strip_summary_heading(summary: str) -> str:
     return re.sub(r"^##\s+Summary\s*\n+", "", summary, flags=re.IGNORECASE).strip()
 
@@ -580,32 +602,43 @@ _HTML_FILTER_CSS = """
 .ref-table tr.filtered-out,
 .object-card.filtered-out { display: none; }
 
-/* Summary illustrations */
-.summary-visuals {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1rem;
-  margin: 1rem 0 1.5rem;
-}
-.summary-visuals figure {
-  margin: 0;
+/* Per-object figures (in object cards and summary copies) */
+figure.object-figure {
+  margin: 0.9rem auto 0.4rem;
+  padding: 0.8rem 0.8rem 0.4rem;
   border: 1px solid #e0e4e8;
   border-radius: 6px;
-  padding: 0.75rem;
   background: #fff;
   text-align: center;
+  max-width: 32rem;
+  width: 100%;
 }
-.summary-visuals figure svg {
-  max-width: 100%;
+figure.object-figure svg {
+  width: 100%;
+  max-width: 30rem;
   height: auto;
   display: block;
   margin: 0 auto;
 }
-.summary-visuals figcaption {
+figure.object-figure figcaption {
   margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: #495057;
-  font-style: italic;
+  font-size: 0.9rem;
+  color: #212529;
+  font-weight: 600;
+  text-align: center;
+}
+figure.object-figure:target {
+  box-shadow: 0 0 0 3px rgba(0, 85, 204, 0.35);
+}
+a.fig-ref { font-weight: 600; }
+
+/* Summary inline figures (a copy of each object figure, rendered right
+   after the sentence that first cites it; uses `sum-fig-N` ids so the
+   in-prose `(Figure N)` links still jump to the canonical `fig-N` in
+   the object card further down). */
+figure.summary-inline-figure {
+  margin: 0.6rem auto 1.2rem;
+  max-width: 30rem;
 }
 """
 
@@ -682,6 +715,98 @@ def _render_md(text: str, name_to_href: dict[str, str]) -> str:
     return _md.markdown(linked, extensions=["fenced_code", "tables"])
 
 
+def _summary_inline_figure(n: int, svg: str) -> str:
+    """Render a single figure copy as an inline block. Uses `sum-fig-N`
+    id to avoid clashing with the canonical `fig-N` in the object card."""
+    safe_svg = _sanitize_svg(svg)
+    return (
+        f'<figure id="sum-fig-{n}" class="object-figure summary-inline-figure">'
+        f'{safe_svg}'
+        f'<figcaption>Figure {n}</figcaption>'
+        f'</figure>'
+    )
+
+
+_SECTION_SPLIT_RE = re.compile(
+    r"(?m)^##\s+(Main definitions|Main results)\s*$"
+)
+
+# Split a paragraph into "sentence" chunks. Cuts at terminal punctuation
+# followed by whitespace and a capital letter, markdown delimiter, or
+# backtick — robust enough for our prose, which the prompt forces into
+# short well-formed sentences.
+_SENTENCE_BOUNDARY_RE = re.compile(r"(?<=[.!?])\s+(?=[A-Z*`<])")
+
+
+def _split_sentences(text: str) -> list[str]:
+    text = text.strip()
+    if not text:
+        return []
+    return _SENTENCE_BOUNDARY_RE.split(text)
+
+
+def _figures_cited(text: str) -> list[int]:
+    """Figure numbers cited as (Figure N) in `text`, in citation order."""
+    return [int(m.group(1)) for m in _FIGURE_REF_RE.finditer(text)]
+
+
+def _render_summary_with_figures(
+    summary_text: str,
+    name_to_href: dict[str, str],
+    valid_fig_nums: set[int],
+    object_figures: dict[str, str],
+    figure_numbers: dict[str, int],
+    categories: dict[str, str],
+) -> str:
+    """Render the structured summary and inject a copy of each figure
+    inline, immediately after the sentence in the Main definitions /
+    Main results subsections that first cites it. Each figure copy uses
+    `sum-fig-N` (the canonical id in the object card stays `fig-N`), so
+    `(Figure N)` links in prose still jump to the description."""
+    # name -> figure number map and svg lookup
+    figs_by_num: dict[int, str] = {}
+    for name, n in figure_numbers.items():
+        svg = object_figures.get(name)
+        if svg:
+            figs_by_num[n] = svg
+
+    # Split the summary markdown on the two recognised section headings.
+    # Each split yields: [pre, "Main definitions", body, "Main results", body].
+    pieces = _SECTION_SPLIT_RE.split(summary_text)
+
+    def render_md_chunk(chunk: str) -> str:
+        return _link_figure_refs(_render_md(chunk, name_to_href), valid_fig_nums)
+
+    def render_subsection(body: str, seen: set[int]) -> str:
+        """Render a Main definitions / Main results subsection: each
+        sentence becomes its own <p>, followed by the figure for any
+        figure number it cites for the first time."""
+        out: list[str] = []
+        for sentence in _split_sentences(body):
+            if not sentence.strip():
+                continue
+            out.append(render_md_chunk(sentence))
+            for n in _figures_cited(sentence):
+                if n in seen or n not in figs_by_num:
+                    continue
+                seen.add(n)
+                out.append(_summary_inline_figure(n, figs_by_num[n]))
+        return "\n".join(out)
+
+    out: list[str] = []
+    # Leading Summary paragraph (no figure injection — it just sets context).
+    out.append(render_md_chunk(pieces[0]))
+    seen_figs: set[int] = set()
+    i = 1
+    while i < len(pieces):
+        section_title = pieces[i]
+        body = pieces[i + 1] if i + 1 < len(pieces) else ""
+        out.append(f'<h2 class="summary-sub">{html.escape(section_title)}</h2>')
+        out.append(render_subsection(body, seen_figs))
+        i += 2
+    return "\n".join(out)
+
+
 def _import_summary(filepath: str) -> dict:
     """Cheap parse of the import block: number of Mathlib imports and the
     deepest namespace depth among them. Used for the file-level Mathlib
@@ -736,7 +861,8 @@ def write_html(
     in_file_depths: dict[str, int] | None = None,
     external_metrics: dict[str, dict] | None = None,
     svg_graph: str | None = None,
-    illustrations: list[tuple[str, str]] | None = None,
+    object_figures: dict[str, str] | None = None,
+    figure_numbers: dict[str, int] | None = None,
 ) -> None:
     natural_names = natural_names or {}
     categories = categories or {}
@@ -744,16 +870,25 @@ def write_html(
     examples = examples or {}
     in_file_depths = in_file_depths or {}
     external_metrics = external_metrics or {}
-    illustrations = illustrations or []
+    object_figures = object_figures or {}
+    figure_numbers = figure_numbers or {}
 
     used_by = _build_used_by(ordered_objects, deps)
+    valid_fig_nums = {n for name, n in figure_numbers.items() if name in object_figures}
 
     filename = Path(filepath).name
     today = date.today().isoformat()
     name_to_href = {obj.name: _anchor_href(obj.name) for obj in ordered_objects}
 
     summary_text = _strip_summary_heading(summary)
-    summary_html = _render_md(summary_text, name_to_href)
+    summary_html = _render_summary_with_figures(
+        summary_text,
+        name_to_href,
+        valid_fig_nums,
+        object_figures,
+        figure_numbers,
+        categories,
+    )
 
     imp = _import_summary(filepath)
     present_cats = sorted({categories.get(o.name, "Other") for o in ordered_objects})
@@ -807,22 +942,11 @@ def write_html(
 """)
 
     # ---- summary ----
-    parts.append(f'<section id="summary">\n<h2>Summary</h2>\n{summary_html}\n')
-
-    # ---- summary illustrations (TikZ-compiled SVGs from the model) ----
-    if illustrations:
-        parts.append('<div class="summary-visuals">\n')
-        for caption, svg in illustrations:
-            safe_svg = _sanitize_svg(svg)
-            cap_html = html.escape(caption) if caption else ""
-            parts.append(
-                f'<figure>{safe_svg}'
-                + (f'<figcaption>{cap_html}</figcaption>' if cap_html else '')
-                + '</figure>\n'
-            )
-        parts.append('</div>\n')
-
-    parts.append('</section>\n')
+    # The summary already comes back from the model with the three required
+    # `## Summary`, `## Main definitions`, `## Main results` subsections —
+    # we drop the leading `## Summary` heading (replaced by our <h2>) and
+    # leave the rest of the markdown intact.
+    parts.append(f'<section id="summary">\n<h2>Summary</h2>\n{summary_html}\n</section>\n')
 
     # ---- dependency graph (inline SVG) ----
     if svg_graph:
@@ -906,7 +1030,7 @@ def write_html(
         desc_md = _normalize_description(
             descriptions.get(obj.name, "No description available."), obj.name
         )
-        desc_html = _render_md(desc_md, name_to_href)
+        desc_html = _link_figure_refs(_render_md(desc_md, name_to_href), valid_fig_nums)
 
         anchor = _anchor_id(obj.name)
         badge_html = _category_badge(cat) if cat else ""
@@ -940,6 +1064,26 @@ def write_html(
                 '</details>'
             )
 
+        # ---- per-object figure (only for main objects that produced one) ----
+        figure_html = ""
+        fig_n = figure_numbers.get(obj.name)
+        svg = object_figures.get(obj.name)
+        if fig_n and svg:
+            safe_svg = _sanitize_svg(svg)
+            figure_html = (
+                f'<figure id="{_fig_anchor_id(fig_n)}" class="object-figure">'
+                f'{safe_svg}'
+                f'<figcaption>Figure {fig_n}</figcaption>'
+                f'</figure>'
+            )
+        fig_ref_html = ""
+        if fig_n and svg:
+            fig_ref_html = (
+                f'<p class="figure-ref"><em>Illustrated in '
+                f'<a class="fig-ref" href="{_fig_anchor_href(fig_n)}">Figure {fig_n}</a>'
+                f'.</em></p>'
+            )
+
         parts.append(f"""<div id="{anchor}" class="object-card" data-category="{html.escape(cat)}">
   <div class="object-header">
     <div class="object-num">{i}</div>
@@ -958,6 +1102,8 @@ def write_html(
     <pre><code>{sig_escaped}</code></pre>
   </details>
   <div class="description">{desc_html}</div>
+  {fig_ref_html}
+  {figure_html}
   {example_html}
   {used_by_html}
   <div class="back-to-top"><a href="#top">&#8593; Top</a></div>

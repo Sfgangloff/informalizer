@@ -18,7 +18,13 @@ from informalizer.dependency_graph import (
     compute_in_file_depths,
     compute_external_metrics,
 )
-from informalizer.api import describe_objects_batch, generate_summary, generate_visualizations
+from informalizer.api import (
+    describe_objects_batch,
+    generate_summary,
+    generate_object_figures,
+    select_main_objects,
+    assign_figure_numbers,
+)
 from informalizer.formatter import print_terminal, write_markdown, write_html
 from informalizer.graph_renderer import render_graph, render_graph_svg
 from informalizer.tikz_renderer import compile_tikz_to_svg
@@ -47,7 +53,6 @@ _STATE_STYLE = {
 def _resolve_output_path(lean_path: Path, output_dir: Path | None, suffix: str = ".html") -> Path:
     stem = lean_path.stem + "_informalizer" + suffix
     return output_dir / stem if output_dir else lean_path.with_name(stem)
-
 
 def _process_file(
     lean_path: Path,
@@ -79,27 +84,43 @@ def _process_file(
     descriptions, natural_names, examples = describe_objects_batch(
         client, ordered, include_examples=include_examples
     )
-    summary = generate_summary(client, ordered, descriptions)
+
+    # Figure numbering must be assigned *before* the summary is generated,
+    # so the summary prose can reference figures by their stable number.
+    main_defs, main_results = select_main_objects(ordered, categories)
+    figure_numbers = assign_figure_numbers(main_defs, main_results)
+
+    object_figures_svg: dict[str, str] = {}
+    if html and (main_defs or main_results):
+        tikz_bodies = generate_object_figures(
+            client, main_defs, main_results, descriptions, deps,
+            natural_names=natural_names, figure_numbers=figure_numbers,
+        )
+        for name, tikz in tikz_bodies.items():
+            fig_n = figure_numbers.get(name)
+            print(f"  Compiling Figure {fig_n} ({name})...", file=sys.stderr)
+            svg = compile_tikz_to_svg(tikz)
+            if svg:
+                object_figures_svg[name] = svg
+            else:
+                print(f"  Figure {fig_n} for {name} failed to compile — skipping",
+                      file=sys.stderr)
+
+    # Only cite figures that actually compiled in the summary prompt.
+    summary_fig_numbers = {
+        name: n for name, n in figure_numbers.items()
+        if name in object_figures_svg
+    }
+    summary = generate_summary(
+        client, ordered, descriptions,
+        natural_names=natural_names, categories=categories,
+        figure_numbers=summary_fig_numbers,
+    )
 
     if terminal:
         print_terminal(str(lean_path), ordered, descriptions, summary,
                        natural_names=natural_names, categories=categories)
     if html:
-        tikz_illustrations = generate_visualizations(
-            client, ordered, descriptions, summary,
-            natural_names=natural_names, categories=categories,
-        )
-        compiled: list[tuple[str, str]] = []
-        for i, (caption, tikz) in enumerate(tikz_illustrations, 1):
-            print(f"  Compiling TikZ illustration {i}/{len(tikz_illustrations)}...",
-                  file=sys.stderr)
-            svg = compile_tikz_to_svg(tikz)
-            if svg:
-                compiled.append((caption, svg))
-            else:
-                print(f"  illustration {i} failed to compile — skipping",
-                      file=sys.stderr)
-
         html_path = output_path.with_suffix(".html")
         svg_graph = render_graph_svg(ordered, deps, categories=categories)
         write_html(str(lean_path), ordered, descriptions, summary, str(html_path),
@@ -108,7 +129,8 @@ def _process_file(
                    in_file_depths=in_file_depths,
                    external_metrics=external_metrics,
                    svg_graph=svg_graph,
-                   illustrations=compiled)
+                   object_figures=object_figures_svg,
+                   figure_numbers=figure_numbers)
         print(f"  Written: {html_path}", file=sys.stderr)
     if markdown:
         md_path = output_path.with_suffix(".md")
